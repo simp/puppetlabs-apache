@@ -1,3 +1,3 @@
-class apache::mod::fcgid {
-  ::apache::mod { 'fcgid': }
+class puppetlabs_apache::mod::fcgid {
+  ::puppetlabs_apache::mod { 'fcgid': }
 }

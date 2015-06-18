@@ -1,4 +1,4 @@
-# Class: apache::python
+# Class:puppetlabs_apache::python
 #
 # This class installs Python for Apache
 #
@@ -12,7 +12,7 @@
 #
 # Sample Usage:
 #
-class apache::python {
-  warning('apache::python is deprecated; please use apache::mod::python')
-  include ::apache::mod::python
+class puppetlabs_apache::python {
+  warning('apache::python is deprecated; please usepuppetlabs_apache::mod::python')
+  include ::puppetlabs_apache::mod::python
 }

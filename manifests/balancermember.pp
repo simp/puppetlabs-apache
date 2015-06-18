@@ -1,4 +1,4 @@
-# == Define Resource Type: apache::balancermember
+# == Define Resource Type:puppetlabs_apache::balancermember
 #
 # This type will setup a balancer member inside a listening service
 # configuration block in /etc/apache/apache.cfg on the load balancer.
@@ -20,8 +20,8 @@
 # fragment name.
 #
 # [*balancer_cluster*]
-# The apache service's instance name (or, the title of the apache::balancer
-# resource). This must match up with a declared apache::balancer resource.
+# The apache service's instance name (or, the title of thepuppetlabs_apache::balancer
+# resource). This must match up with a declaredpuppetlabs_apache::balancer resource.
 #
 # [*url*]
 # The url used to contact the balancer member server.
@@ -39,14 +39,23 @@
 #   options          => ['ping=5', 'disablereuse=on', 'retry=5', 'ttl=120'],
 # }
 #
-define apache::balancermember(
+define puppetlabs_apache::balancermember(
   $balancer_cluster,
   $url = "http://${::fqdn}/",
   $options = [],
 ) {
 
-  concat::fragment { "BalancerMember ${url}":
-    target  => "${::apache::params::confd_dir}/balancer_${balancer_cluster}.conf",
-    content => inline_template(" BalancerMember ${url} <%= @options.join ' ' %>\n"),
+#  concat::fragment { "BalancerMember ${url}":
+#    ensure  => present,
+#    target  => "${::puppetlabs_apache::params::confd_dir}/balancer_${balancer_cluster}.conf",
+#    content => inline_template(" BalancerMember ${url} <%= @options.join ' ' %>\n"),
+#  }
+
+  concat_build { "plabs_apache_balancermember":
+    target => "${::puppetlabs_apache::params::confd_dir}/balancer_${balancer_cluster}.conf"
+  }
+
+  concat_fragment { "plabs_apache_balancermember+apache_balancer_cluster":
+    content => inline_template(" BalancerMember ${url} <%= @options.join ' ' %>\n")
   }
 }

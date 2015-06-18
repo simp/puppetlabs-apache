@@ -1,1 +1,1 @@
-include apache::dev
+includepuppetlabs_apache::dev

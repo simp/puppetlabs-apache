@@ -1,3 +1,3 @@
-class apache::mod::perl {
-  ::apache::mod { 'perl': }
+class puppetlabs_apache::mod::perl {
+  ::puppetlabs_apache::mod { 'perl': }
 }

@@ -1,4 +1,4 @@
-# Tests the path and identifier parameters for the apache::mod class
+# Tests the path and identifier parameters for thepuppetlabs_apache::mod class
 
 # Base class for clarity:
 class { 'apache': }

@@ -1,15 +1,15 @@
-class apache::mod::proxy (
+class puppetlabs_apache::mod::proxy (
   $proxy_requests = 'Off',
   $allow_from = undef,
 ) {
-  ::apache::mod { 'proxy': }
+  ::puppetlabs_apache::mod { 'proxy': }
   # Template uses $proxy_requests
   file { 'proxy.conf':
     ensure  => file,
-    path    => "${::apache::mod_dir}/proxy.conf",
-    content => template('apache/mod/proxy.conf.erb'),
-    require => Exec["mkdir ${::apache::mod_dir}"],
-    before  => File[$::apache::mod_dir],
+    path    => "${::puppetlabs_apache::mod_dir}/proxy.conf",
+    content => template('puppetlabs_apache/mod/proxy.conf.erb'),
+    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
+    before  => File[$::puppetlabs_apache::mod_dir],
     notify  => Service['httpd'],
   }
 }

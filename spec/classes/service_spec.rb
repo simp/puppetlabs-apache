@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'apache::service', :type => :class do
   let :pre_condition do
-    'include apache::params'
+    'includepuppetlabs_apache::params'
   end
   context "on a Debian OS" do
     let :facts do
@@ -71,6 +71,11 @@ describe 'apache::service', :type => :class do
         'enable'    => 'true'
         )
       }
+    end
+
+    context "with $service_ensure => 'UNDEF'" do
+      let (:params) {{ :service_ensure => 'UNDEF' }}
+      it { should contain_service("httpd").without_ensure }
     end
   end
 

@@ -1,3 +1,3 @@
-class apache::mod::expires {
-  ::apache::mod { 'expires': }
+class puppetlabs_apache::mod::expires {
+  ::puppetlabs_apache::mod { 'expires': }
 }

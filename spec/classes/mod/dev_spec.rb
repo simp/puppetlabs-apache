@@ -7,7 +7,7 @@ describe 'apache::mod::dev', :type => :class do
   ].each do |osfamily, operatingsystemrelease|
     if osfamily == 'FreeBSD'
       let :pre_condition do
-        'include apache::package'
+        'includepuppetlabs_apache::package'
       end
     end
     context "on a #{osfamily} OS" do

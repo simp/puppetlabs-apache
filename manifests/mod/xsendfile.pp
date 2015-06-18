@@ -1,4 +1,4 @@
-class apache::mod::xsendfile {
-  include ::apache::params
-  ::apache::mod { 'xsendfile': }
+class puppetlabs_apache::mod::xsendfile {
+  include ::puppetlabs_apache::params
+  ::puppetlabs_apache::mod { 'xsendfile': }
 }

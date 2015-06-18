@@ -1,5 +1,5 @@
-class apache::mod::auth_kerb {
-  ::apache::mod { 'auth_kerb': }
+class puppetlabs_apache::mod::auth_kerb {
+  ::puppetlabs_apache::mod { 'auth_kerb': }
 }
 
 

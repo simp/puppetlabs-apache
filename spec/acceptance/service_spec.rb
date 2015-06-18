@@ -6,8 +6,8 @@ describe 'apache::service class', :unless => UNSUPPORTED_PLATFORMS.include?(fact
       pp = <<-EOS
       class { 'apache': }
       file { '/tmp/test':
-        require => Class['apache'],
-        notify  => Class['apache::service'],
+        require => Class['puppetlabs_apache'],
+        notify  => Class['puppetlabs_apache::service'],
       }
       EOS
 

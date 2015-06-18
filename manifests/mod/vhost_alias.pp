@@ -1,3 +1,3 @@
-class apache::mod::vhost_alias {
-  ::apache::mod { 'vhost_alias': }
+class puppetlabs_apache::mod::vhost_alias {
+  ::puppetlabs_apache::mod { 'vhost_alias': }
 }

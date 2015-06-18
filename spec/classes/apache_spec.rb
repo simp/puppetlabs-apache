@@ -75,7 +75,7 @@ describe 'apache', :type => :class do
 
     context "with Apache version < 2.4" do
       let :params do
-        { :apache_version => 2.2 }
+        { :apache_version => '2.2' }
       end
 
       it { should contain_file("/etc/apache2/apache2.conf").with_content %r{^Include "/etc/apache2/conf\.d/\*\.conf"$} }
@@ -83,7 +83,7 @@ describe 'apache', :type => :class do
 
     context "with Apache version >= 2.4" do
       let :params do
-        { :apache_version => 2.4 }
+        { :apache_version => '2.4' }
       end
 
       it { should contain_file("/etc/apache2/apache2.conf").with_content %r{^IncludeOptional "/etc/apache2/conf\.d/\*\.conf"$} }
@@ -138,6 +138,53 @@ describe 'apache', :type => :class do
 
         it { should_not contain_group('www-data') }
         it { should contain_file("/etc/apache2/apache2.conf").with_content %r{^Group www-data\n} }
+      end
+    end
+
+    describe "Add extra LogFormats" do
+      context "When parameter log_formats is a hash" do
+        let :params do
+          { :log_formats => {
+            'vhost_common'   => "%v %h %l %u %t \"%r\" %>s %b",
+            'vhost_combined' => "%v %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+          } }
+        end
+
+        it { should contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b" vhost_common\n} }
+        it { should contain_file("/etc/apache2/apache2.conf").with_content %r{^LogFormat "%v %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"" vhost_combined\n} }
+      end
+    end
+
+    context "on Ubuntu" do
+      let :facts do
+        super().merge({
+          :operatingsystem => 'Ubuntu'
+        })
+      end
+
+      context "13.10" do
+        let :facts do
+          super().merge({
+            :operatingsystemrelease => '13.10'
+          })
+        end
+        it { should contain_class('apache').with_apache_version('2.4') }
+      end
+      context "12.04" do
+        let :facts do
+          super().merge({
+            :operatingsystemrelease => '12.04'
+          })
+        end
+        it { should contain_class('apache').with_apache_version('2.2') }
+      end
+      context "13.04" do
+        let :facts do
+          super().merge({
+            :operatingsystemrelease => '13.04'
+          })
+        end
+        it { should contain_class('apache').with_apache_version('2.2') }
       end
     end
   end
@@ -232,7 +279,7 @@ describe 'apache', :type => :class do
 
       context "with Apache version < 2.4" do
         let :params do
-          { :apache_version => 2.2 }
+          { :apache_version => '2.2' }
         end
 
         it { should contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^Include "/etc/httpd/conf\.d/\*\.conf"$} }
@@ -240,7 +287,7 @@ describe 'apache', :type => :class do
 
       context "with Apache version >= 2.4" do
         let :params do
-          { :apache_version => 2.4 }
+          { :apache_version => '2.4' }
         end
 
         it { should contain_file("/etc/httpd/conf/httpd.conf").with_content %r{^IncludeOptional "/etc/httpd/conf\.d/\*\.conf"$} }

@@ -12,18 +12,20 @@
 4. [Usage - The classes and defined types available for configuration](#usage)
     * [Classes and Defined Types](#classes-and-defined-types)
         * [Class: apache](#class-apache)
-        * [Class: apache::default_mods](#class-apachedefault_mods)
-        * [Defined Type: apache::mod](#defined-type-apachemod)
-        * [Classes: apache::mod::*](#classes-apachemodname)
-        * [Class: apache::mod::ssl](#class-apachemodssl)
-        * [Class: apache::mod::wsgi](#class-apachemodwsgi)
-        * [Defined Type: apache::vhost](#defined-type-apachevhost)
-        * [Parameter: `directories` for apache::vhost](#parameter-directories-for-apachevhost)
-        * [SSL parameters for apache::vhost](#ssl-parameters-for-apachevhost)
+        * [Class:puppetlabs_apache::default_mods](#class-apachedefault_mods)
+        * [Defined Type:puppetlabs_apache::mod](#defined-type-apachemod)
+        * [Classes:puppetlabs_apache::mod::*](#classes-apachemodname)
+        * [Class:puppetlabs_apache::mod::pagespeed](#class-apachemodpagespeed)
+        * [Class:puppetlabs_apache::mod::php](#class-apachemodphp)
+        * [Class:puppetlabs_apache::mod::ssl](#class-apachemodssl)
+        * [Class:puppetlabs_apache::mod::wsgi](#class-apachemodwsgi)
+        * [Defined Type:puppetlabs_apache::vhost](#defined-type-apachevhost)
+        * [Parameter: `directories` forpuppetlabs_apache::vhost](#parameter-directories-for-apachevhost)
+        * [SSL parameters forpuppetlabs_apache::vhost](#ssl-parameters-for-apachevhost)
     * [Virtual Host Examples - Demonstrations of some configuration options](#virtual-host-examples)
     * [Load Balancing](#load-balancing)
-        * [Defined Type: apache::balancer](#defined-type-apachebalancer)
-        * [Defined Type: apache::balancermember](#defined-type-apachebalancermember)
+        * [Defined Type:puppetlabs_apache::balancer](#defined-type-apachebalancer)
+        * [Defined Type:puppetlabs_apache::balancermember](#defined-type-apachebalancermember)
         * [Examples - Load balancing with exported and non-exported resources](#examples)
 5. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
     * [Classes](#classes)
@@ -86,7 +88,7 @@ Declaring the `apache` class will create a default virtual host by setting up a 
 To configure a very basic, name-based virtual host
 
 ```puppet
-    apache::vhost { 'first.example.com':
+   puppetlabs_apache::vhost { 'first.example.com':
       port    => '80',
       docroot => '/var/www/first',
     }
@@ -97,7 +99,7 @@ To configure a very basic, name-based virtual host
 A slightly more complicated example, changes the docroot owner/group from the default 'root'
 
 ```puppet
-    apache::vhost { 'second.example.com':
+   puppetlabs_apache::vhost { 'second.example.com':
       port          => '80',
       docroot       => '/var/www/second',
       docroot_owner => 'third',
@@ -108,7 +110,7 @@ A slightly more complicated example, changes the docroot owner/group from the de
 To set up a virtual host with SSL and default SSL certificates
 
 ```puppet
-    apache::vhost { 'ssl.example.com':
+   puppetlabs_apache::vhost { 'ssl.example.com':
       port    => '443',
       docroot => '/var/www/ssl',
       ssl     => true,
@@ -118,7 +120,7 @@ To set up a virtual host with SSL and default SSL certificates
 To set up a virtual host with SSL and specific SSL certificates
 
 ```puppet
-    apache::vhost { 'fourth.example.com':
+   puppetlabs_apache::vhost { 'fourth.example.com':
       port     => '443',
       docroot  => '/var/www/fourth',
       ssl      => true,
@@ -130,7 +132,7 @@ To set up a virtual host with SSL and specific SSL certificates
 Virtual hosts listen on '*' by default. To listen on a specific IP address
 
 ```puppet
-    apache::vhost { 'subdomain.example.com':
+   puppetlabs_apache::vhost { 'subdomain.example.com':
       ip      => '127.0.0.1',
       port    => '80',
       docroot => '/var/www/subdomain',
@@ -140,7 +142,7 @@ Virtual hosts listen on '*' by default. To listen on a specific IP address
 To set up a virtual host with a wildcard alias for the subdomain mapped to a same-named directory, for example: `http://example.com.loc` to `/var/www/example.com`
 
 ```puppet
-    apache::vhost { 'subdomain.loc':
+   puppetlabs_apache::vhost { 'subdomain.loc':
       vhost_name       => '*',
       port             => '80',
       virtual_docroot' => '/var/www/%-2+',
@@ -152,7 +154,7 @@ To set up a virtual host with a wildcard alias for the subdomain mapped to a sam
 To set up a virtual host with suPHP
 
 ```puppet
-    apache::vhost { 'suphp.example.com':
+   puppetlabs_apache::vhost { 'suphp.example.com':
       port                => '80',
       docroot             => '/home/appuser/myphpapp',
       suphp_addhandler    => 'x-httpd-php',
@@ -167,7 +169,7 @@ To set up a virtual host with suPHP
 To set up a virtual host with WSGI
 
 ```puppet
-    apache::vhost { 'wsgi.example.com':
+   puppetlabs_apache::vhost { 'wsgi.example.com':
       port                        => '80',
       docroot                     => '/var/www/pythonapp',
       wsgi_application_group      => '%{GLOBAL}',
@@ -188,7 +190,7 @@ To set up a virtual host with WSGI
 Starting in Apache 2.2.16, HTTPD supports [FallbackResource](https://httpd.apache.org/docs/current/mod/mod_dir.html#fallbackresource), a simple replacement for common RewriteRules.
 
 ```puppet
-    apache::vhost { 'wordpress.example.com':
+   puppetlabs_apache::vhost { 'wordpress.example.com':
       port                => '80',
       docroot             => '/var/www/wordpress',
       fallbackresource    => '/index.php',
@@ -272,7 +274,7 @@ The default SSL key, which is automatically set based on your operating system (
 Sets up a default SSL virtual host. Defaults to 'false'. If set to 'true', will set up the following vhost:
 
 ```puppet
-    apache::vhost { 'default-ssl':
+   puppetlabs_apache::vhost { 'default-ssl':
       port            => 443,
       ssl             => true,
       docroot         => $docroot,
@@ -304,9 +306,21 @@ Enables persistent connections.
 
 Sets the amount of time the server will wait for subsequent requests on a persistent connection. Defaults to '15'.
 
+#####`max_keepalive_requests`
+
+Sets the limit of the number of requests allowed per connection when KeepAlive is on. Defaults to '100'.
+
 #####`log_level`
 
 Changes the verbosity level of the error log. Defaults to 'warn'. Valid values are 'emerg', 'alert', 'crit', 'error', 'warn', 'notice', 'info', or 'debug'.
+
+#####`log_formats`
+
+Define additional [LogFormats](https://httpd.apache.org/docs/current/mod/mod_log_config.html#logformat). This is done in a Hash:
+
+```puppet
+  $log_formats = { vhost_common => '%v %h %l %u %t \"%r\" %>s %b' }
+```
 
 #####`logroot`
 
@@ -378,7 +392,7 @@ Determines whether the HTTPD service is enabled when the machine is booted. Defa
 
 #####`service_ensure`
 
-Determines whether the service should be running. Can be set to 'undef', which is useful when you want to let the service be managed by some other application like Pacemaker. Defaults to 'running'.
+Determines whether the service should be running. Valid values are true, false, 'running' or 'stopped' when Puppet should manage the service. Any other value will set ensure to false for the Apache service, which is useful when you want to let the service be managed by some other application like Pacemaker. Defaults to 'running'.
 
 #####`service_name`
 
@@ -405,14 +419,15 @@ Installs default Apache modules based on what OS you are running.
 Used to enable arbitrary Apache HTTPD modules for which there is no specific `apache::mod::[name]` class. The `apache::mod` defined type will also install the required packages to enable the module, if any.
 
 ```puppet
-    apache::mod { 'rewrite': }
-    apache::mod { 'ldap': }
+   puppetlabs_apache::mod { 'rewrite': }
+   puppetlabs_apache::mod { 'ldap': }
 ```
 
 ####Classes: `apache::mod::[name]`
 
 There are many `apache::mod::[name]` classes within this module that can be declared using `include`:
 
+* `actions`
 * `alias`
 * `auth_basic`
 * `auth_kerb`
@@ -441,6 +456,7 @@ There are many `apache::mod::[name]` classes within this module that can be decl
 * `mime_magic`*
 * `negotiation`
 * `nss`*
+* `pagespeed` (see [`apache::mod::pagespeed`](#class-apachemodpagespeed) below)
 * `passenger`*
 * `perl`
 * `peruser`
@@ -456,6 +472,7 @@ There are many `apache::mod::[name]` classes within this module that can be decl
 * `rewrite`
 * `rpaf`*
 * `setenvif`
+* `speling`
 * `ssl`* (see [`apache::mod::ssl`](#class-apachemodssl) below)
 * `status`*
 * `suphp`
@@ -468,6 +485,69 @@ There are many `apache::mod::[name]` classes within this module that can be decl
 Modules noted with a * indicate that the module has settings and, thus, a template that includes parameters. These parameters control the module's configuration. Most of the time, these parameters will not require any configuration or attention.
 
 The modules mentioned above, and other Apache modules that have templates, will cause template files to be dropped along with the mod install and the module will not work without the template. Any module without a template will install the package but drop no files.
+
+####Class: `apache::mod::pagespeed`
+
+Installs and manages mod_pagespeed, which is a Google module that rewrites web pages to reduce latency and bandwidth.
+
+This module does *not* manage the software repositories needed to automatically install the
+mod-pagespeed-stable package. The module does however require that the package be installed,
+or be installable using the system's default package provider.  You should ensure that this
+pre-requisite is met or declaring `apache::mod::pagespeed` will cause the puppet run to fail.
+
+These are the defaults:
+
+```puppet
+    class { 'apache::mod::pagespeed':
+      inherit_vhost_config          => 'on',
+      filter_xhtml                  => false,
+      cache_path                    => '/var/cache/mod_pagespeed/',
+      log_dir                       => '/var/log/pagespeed',
+      memache_servers               => [],
+      rewrite_level                 => 'CoreFilters',
+      disable_filters               => [],
+      enable_filters                => [],
+      forbid_filters                => [],
+      rewrite_deadline_per_flush_ms => 10,
+      additional_domains            => undef,
+      file_cache_size_kb            => 102400,
+      file_cache_clean_interval_ms  => 3600000,
+      lru_cache_per_process         => 1024,
+      lru_cache_byte_limit          => 16384,
+      css_flatten_max_bytes         => 2048,
+      css_inline_max_bytes          => 2048,
+      css_image_inline_max_bytes    => 2048,
+      image_inline_max_bytes        => 2048,
+      js_inline_max_bytes           => 2048,
+      css_outline_min_bytes         => 3000,
+      js_outline_min_bytes          => 3000,
+      inode_limit                   => 500000,
+      image_max_rewrites_at_once    => 8,
+      num_rewrite_threads           => 4,
+      num_expensive_rewrite_threads => 4,
+      collect_statistics            => 'on',
+      statistics_logging            => 'on',
+      allow_view_stats              => [],
+      allow_pagespeed_console       => [],
+      allow_pagespeed_message       => [],
+      message_buffer_size           => 100000,
+      additional_configuration      => { }
+    }
+```
+
+Full documentation for mod_pagespeed is available from [Google](http://modpagespeed.com).
+
+####Class: `apache::mod::php`
+
+Installs and configures mod_php. The defaults are OS-dependant.
+
+Overriding the package name:
+```
+  class {'::puppetlabs_apache::mod::php':
+    package_name => "php54-php",
+    path         => "${::puppetlabs_apache::params::lib_path}/libphp54-php5.so",
+  }
+```
 
 ####Class: `apache::mod::ssl`
 
@@ -599,6 +679,10 @@ Sets group access to the docroot directory. Defaults to 'root'.
 
 Sets individual user access to the docroot directory. Defaults to 'root'.
 
+#####`docroot_mode`
+
+Sets access permissions of the docroot directory. Defaults to 'undef'.
+
 #####`error_log`
 
 Specifies whether `*_error.log` directives should be configured. Defaults to 'true'.
@@ -620,7 +704,7 @@ Sends all error log messages to syslog. Defaults to 'undef'.
 A list of hashes which can be used to override the [ErrorDocument](https://httpd.apache.org/docs/current/mod/core.html#errordocument) settings for this vhost. Defaults to '[]'. Example:
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       error_documents => [
         { 'error_code' => '503', 'document' => '/service-unavail' },
         { 'error_code' => '407', 'document' => 'https://example.com/proxy/login' },
@@ -663,7 +747,7 @@ Configures [ITK](http://mpm-itk.sesse.net/) in a hash. Keys may be:
 Usage will typically look like:
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot => '/path/to/directory',
       itk     => {
         user  => 'someuser',
@@ -684,12 +768,16 @@ Specifies the verbosity of the error log. Defaults to 'warn' for the global serv
 
 Specifies URLs you do not want to proxy. This parameter is meant to be used in combination with [`proxy_dest`](#proxy_dest).
 
+#####`proxy_preserve_host`
+
+Sets the [ProxyPreserveHost Directive](http://httpd.apache.org/docs/2.2/mod/mod_proxy.html#proxypreservehost).  true Enables the Host: line from an incoming request to be proxied to the host instead of hostname .  false sets this option to off (default).
+
 #####`options`
 
 Sets the [Options](http://httpd.apache.org/docs/current/mod/core.html#options) for the specified virtual host. Defaults to '['Indexes','FollowSymLinks','MultiViews']', as demonstrated below:
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       options => ['Indexes','FollowSymLinks','MultiViews'],
     }
@@ -749,7 +837,7 @@ Specifies the address to redirect to. Defaults to 'undef'.
 Specifies the source URIs that will redirect to the destination specified in `redirect_dest`. If more than one item for redirect is supplied, the source and destination must be the same length and the items will be order-dependent. 
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       redirect_source => ['/images','/downloads'],
       redirect_dest   => ['http://img.example.com/','http://downloads.example.com/'],
@@ -761,7 +849,7 @@ Specifies the source URIs that will redirect to the destination specified in `re
 Specifies the status to append to the redirect. Defaults to 'undef'.
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       redirect_status => ['temp','permanent'],
     }
@@ -772,7 +860,7 @@ Specifies the status to append to the redirect. Defaults to 'undef'.
 Determines which server status should be raised for a given regular expression. Entered as an array. Defaults to 'undef'.
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       redirectmatch_status => ['404','404'],
       redirectmatch_regexp => ['\.git(/.*|$)/','\.svn(/.*|$)'],
@@ -784,7 +872,7 @@ Determines which server status should be raised for a given regular expression. 
 Modifies collected [request headers](http://httpd.apache.org/docs/current/mod/mod_headers.html#requestheader) in various ways, including adding additional request headers, removing request headers, etc. Defaults to 'undef'.
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       request_headers => [
         'append MirrorID "mirror 12"',
@@ -800,7 +888,7 @@ Creates URL rewrite rules. Expects an array of hashes, and the hash keys can be 
 For example, you can specify that anyone trying to access index.html will be served welcome.html
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       rewrites => [ { rewrite_rule => ['^index\.html$ welcome.html'] } ]
     }
@@ -809,7 +897,7 @@ For example, you can specify that anyone trying to access index.html will be ser
 The parameter allows rewrite conditions that, when true, will execute the associated rule. For instance, if you wanted to rewrite URLs only if the visitor is using IE
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       rewrites => [
         {
@@ -824,7 +912,7 @@ The parameter allows rewrite conditions that, when true, will execute the associ
 You can also apply multiple conditions. For instance, rewrite index.html to welcome.html only when the browser is Lynx or Mozilla (version 1 or 2)
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       rewrites => [
         {
@@ -839,7 +927,7 @@ You can also apply multiple conditions. For instance, rewrite index.html to welc
 Multiple rewrites and conditions are also possible
 
 ```puppet
-    apache::vhost { 'site.name.fdqn':
+   puppetlabs_apache::vhost { 'site.name.fdqn':
       …
       rewrites => [
         {
@@ -852,7 +940,7 @@ Multiple rewrites and conditions are also possible
           rewrite_cond => ['%{HTTP_USER_AGENT} ^MSIE'],
           rewrite_rule => ['^index\.html$ /index.IE.html [L]'],
         },
-        }
+        {
           rewrite_base => /apps/,
           rewrite_rule => ['^index\.cgi$ index.php', '^index\.html$ index.php', '^index\.asp$ index.html'],
         },
@@ -926,7 +1014,7 @@ Set up a virtual host with [suPHP](http://suphp.org/DocumentationView.html?file=
 To set up a virtual host with suPHP
 
 ```puppet
-    apache::vhost { 'suphp.example.com':
+   puppetlabs_apache::vhost { 'suphp.example.com':
       port                => '80',
       docroot             => '/home/appuser/myphpapp',
       suphp_addhandler    => 'x-httpd-php',
@@ -947,7 +1035,7 @@ Enables name-based virtual hosting. If no IP is passed to the virtual host but t
 Sets up a virtual host with a wildcard alias subdomain mapped to a directory with the same name. For example, 'http://example.com' would map to '/var/www/example.com'. Defaults to 'false'. 
 
 ```puppet
-    apache::vhost { 'subdomain.loc':
+   puppetlabs_apache::vhost { 'subdomain.loc':
       vhost_name       => '*',
       port             => '80',
       virtual_docroot' => '/var/www/%-2+',
@@ -956,7 +1044,7 @@ Sets up a virtual host with a wildcard alias subdomain mapped to a directory wit
     }
 ```
 
-#####`wsgi_daemon_process`, `wsgi_daemon_process_options`, `wsgi_process_group`, & `wsgi_script_aliases`
+#####`wsgi_daemon_process`, `wsgi_daemon_process_options`, `wsgi_process_group`, `wsgi_script_aliases`, & `wsgi_pass_authorization`
 
 Set up a virtual host with [WSGI](https://code.google.com/p/modwsgi/).
 
@@ -968,10 +1056,12 @@ Set up a virtual host with [WSGI](https://code.google.com/p/modwsgi/).
 
 `wsgi_script_aliases` requires a hash of web paths to filesystem .wsgi paths. Defaults to 'undef'.
 
+`wsgi_pass_authorization` the WSGI application handles authorisation instead of Apache when set to 'On'. For more information see [here] (http://modwsgi.readthedocs.org/en/latest/configuration-directives/WSGIPassAuthorization.html).  Defaults to 'undef' where apache will set the defaults setting to 'Off'.
+
 To set up a virtual host with WSGI
 
 ```puppet
-    apache::vhost { 'wsgi.example.com':
+   puppetlabs_apache::vhost { 'wsgi.example.com':
       port                        => '80',
       docroot                     => '/var/www/pythonapp',
       wsgi_daemon_process         => 'wsgi',
@@ -992,7 +1082,7 @@ The `directories` parameter within the `apache::vhost` class passes an array of 
 Each hash passed to `directories` must contain `path` as one of the keys.  You may also pass in `provider` which, if missing, defaults to 'directory'. (A full list of acceptable keys is below.) General usage will look something like
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [
         { path => '/path/to/directory', <key> => <value> },
@@ -1006,7 +1096,7 @@ Each hash passed to `directories` must contain `path` as one of the keys.  You m
 The `provider` key can be set to 'directory', 'files', or 'location'. If the path starts with a [~](https://httpd.apache.org/docs/current/mod/core.html#files), HTTPD will interpret this as the equivalent of DirectoryMatch, FilesMatch, or LocationMatch.
 
 ```puppet
-    apache::vhost { 'files.example.net':
+   puppetlabs_apache::vhost { 'files.example.net':
       docroot     => '/var/www/files',
       directories => [
         { 'path'     => '/var/www/files', 
@@ -1020,7 +1110,7 @@ The `provider` key can be set to 'directory', 'files', or 'location'. If the pat
 Available handlers, represented as keys, should be placed within the  `directory`,`'files`, or `location` hashes.  This looks like
 
 ```puppet
-  apache::vhost { 'sample.example.net':
+ puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ { path => '/path/to/directory', handler => value } ],
 }
@@ -1033,7 +1123,7 @@ Any handlers you do not set in these hashes will be considered 'undefined' withi
 Sets [AddHandler](http://httpd.apache.org/docs/current/mod/mod_mime.html#addhandler) directives, which map filename extensions to the specified handler. Accepts a list of hashes, with `extensions` serving to list the extensions being managed by the handler, and takes the form: `{ handler => 'handler-name', extensions => ['extension']}`. 
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path        => '/path/to/directory',
@@ -1048,7 +1138,7 @@ Sets [AddHandler](http://httpd.apache.org/docs/current/mod/mod_mime.html#addhand
 Sets an [Allow](http://httpd.apache.org/docs/2.2/mod/mod_authz_host.html#allow) directive, which groups authorizations based on hostnames or IPs. **Deprecated:** This parameter is being deprecated due to a change in Apache. It will only work with Apache 2.2 and lower. 
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path  => '/path/to/directory', 
@@ -1063,7 +1153,7 @@ Sets an [Allow](http://httpd.apache.org/docs/2.2/mod/mod_authz_host.html#allow) 
 Sets the types of directives allowed in [.htaccess](http://httpd.apache.org/docs/current/mod/core.html#allowoverride) files. Accepts an array.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot      => '/path/to/directory',
       directories  => [ 
         { path           => '/path/to/directory', 
@@ -1134,7 +1224,7 @@ Sets the value for [AuthUserFile](httpd.apache.org/docs/current/mod/mod_authn_fi
 Pass a string of custom configuration directives to be placed at the end of the directory configuration.
 
 ```puppet
-  apache::vhost { 'monitor':
+ puppetlabs_apache::vhost { 'monitor':
     … 
     custom_fragment => '
   <Location /balancer-manager>
@@ -1156,7 +1246,7 @@ Pass a string of custom configuration directives to be placed at the end of the 
 Sets a [Deny](http://httpd.apache.org/docs/2.2/mod/mod_authz_host.html#deny) directive, specifying which hosts are denied access to the server. **Deprecated:** This parameter is being deprecated due to a change in Apache. It will only work with Apache 2.2 and lower. 
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path => '/path/to/directory', 
@@ -1171,7 +1261,7 @@ Sets a [Deny](http://httpd.apache.org/docs/2.2/mod/mod_authz_host.html#deny) dir
 An array of hashes used to override the [ErrorDocument](https://httpd.apache.org/docs/current/mod/core.html#errordocument) settings for the directory. 
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       directories => [ 
         { path            => '/srv/www',
           error_documents => [
@@ -1189,7 +1279,7 @@ An array of hashes used to override the [ErrorDocument](https://httpd.apache.org
 Adds lines for [Header](http://httpd.apache.org/docs/current/mod/mod_headers.html#header) directives.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => {
         path    => '/path/to/directory',
@@ -1203,7 +1293,7 @@ Adds lines for [Header](http://httpd.apache.org/docs/current/mod/mod_headers.htm
 Allows configuration settings for [directory indexing](httpd.apache.org/docs/current/mod/mod_autoindex.html#indexoptions).
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path          => '/path/to/directory', 
@@ -1219,7 +1309,7 @@ Allows configuration settings for [directory indexing](httpd.apache.org/docs/cur
 Sets the [default ordering](http://httpd.apache.org/docs/current/mod/mod_autoindex.html#indexorderdefault) of the directory index.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path                => '/path/to/directory', 
@@ -1235,7 +1325,7 @@ Sets the [default ordering](http://httpd.apache.org/docs/current/mod/mod_autoind
 Lists the [Options](httpd.apache.org/docs/current/mod/core.html#options) for the given Directory block.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path    => '/path/to/directory', 
@@ -1250,7 +1340,7 @@ Lists the [Options](httpd.apache.org/docs/current/mod/core.html#options) for the
 Sets the order of processing Allow and Deny statements as per [Apache core documentation](httpd.apache.org/docs/2.2/mod/mod_authz_host.html#order). **Deprecated:** This parameter is being deprecated due to a change in Apache. It will only work with Apache 2.2 and lower.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path  => '/path/to/directory', 
@@ -1260,12 +1350,27 @@ Sets the order of processing Allow and Deny statements as per [Apache core docum
     }
 ```
 
+######`sethandler`
+
+Sets a `SetHandler` directive as per the [Apache Core documentation](http://httpd.apache.org/docs/2.2/mod/core.html#sethandler). An example:
+
+```puppet
+   puppetlabs_apache::vhost { 'sample.example.net':
+      docroot     => '/path/to/directory',
+      directories => [ 
+        { path       => '/path/to/directory', 
+          sethandler => 'None', 
+        }
+      ],
+    }
+```
+
 ######`passenger_enabled`
 
 Sets the value for the [PassengerEnabled](http://www.modrails.com/documentation/Users%20guide%20Apache.html#PassengerEnabled) directory to 'on' or 'off'. Requires `apache::mod::passenger` to be included.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       docroot     => '/path/to/directory',
       directories => [ 
         { path              => '/path/to/directory', 
@@ -1286,7 +1391,7 @@ Sets the value for the [PassengerEnabled](http://www.modrails.com/documentation/
 String or list of [SSLOptions](https://httpd.apache.org/docs/current/mod/mod_ssl.html#ssloptions), which configure SSL engine run-time options. This handler takes precedence over SSLOptions set in the parent block of the vhost.
 
 ```puppet
-    apache::vhost { 'secure.example.net':
+   puppetlabs_apache::vhost { 'secure.example.net':
       docroot     => '/path/to/directory',
       directories => [
         { path        => '/path/to/directory', 
@@ -1304,7 +1409,7 @@ String or list of [SSLOptions](https://httpd.apache.org/docs/current/mod/mod_ssl
 A hash containing the 'user' and 'group' keys for the [suPHP_UserGroup](http://www.suphp.org/DocumentationView.html?file=apache/CONFIG) setting. It must be used with `suphp_engine => on` in the vhost declaration, and may only be passed within `directories`.
 
 ```puppet
-    apache::vhost { 'secure.example.net':
+   puppetlabs_apache::vhost { 'secure.example.net':
       docroot     => '/path/to/directory',
       directories => [
         { path  => '/path/to/directory', 
@@ -1374,7 +1479,7 @@ Specifies the SSL key. Defaults are based on your operating system: '/etc/pki/tl
 Sets the [SSLVerifyClient](http://httpd.apache.org/docs/current/mod/mod_ssl.html#sslverifyclient) directive, which sets the certificate verification level for client authentication. Valid values are: 'none', 'optional', 'require', and 'optional_no_ca'. Defaults to 'undef'.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       …
       ssl_verify_client => 'optional',
     }
@@ -1385,7 +1490,7 @@ Sets the [SSLVerifyClient](http://httpd.apache.org/docs/current/mod/mod_ssl.html
 Sets the [SSLVerifyDepth](http://httpd.apache.org/docs/current/mod/mod_ssl.html#sslverifydepth) directive, which specifies the maximum depth of CA certificates in client certificate verification. Defaults to 'undef'.
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       …
       ssl_verify_depth => 1,
     }
@@ -1398,7 +1503,7 @@ Sets the [SSLOptions](http://httpd.apache.org/docs/current/mod/mod_ssl.html#sslo
 A string:
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       …
       ssl_options => '+ExportCertData',
     }
@@ -1407,7 +1512,7 @@ A string:
 An array:
 
 ```puppet
-    apache::vhost { 'sample.example.net':
+   puppetlabs_apache::vhost { 'sample.example.net':
       …
       ssl_options => [ '+StrictRequire', '+ExportCertData' ],
     }
@@ -1425,7 +1530,7 @@ The apache module allows you to set up pretty much any configuration of virtual 
 Configure a vhost with a server administrator
 
 ```puppet
-    apache::vhost { 'third.example.com':
+   puppetlabs_apache::vhost { 'third.example.com':
       port        => '80',
       docroot     => '/var/www/third',
       serveradmin => 'admin@example.com',
@@ -1437,7 +1542,7 @@ Configure a vhost with a server administrator
 Set up a vhost with aliased servers
 
 ```puppet
-    apache::vhost { 'sixth.example.com':
+   puppetlabs_apache::vhost { 'sixth.example.com':
       serveraliases => [
         'sixth.example.org',
         'sixth.example.net',
@@ -1452,7 +1557,7 @@ Set up a vhost with aliased servers
 Configure a vhost with a cgi-bin
 
 ```puppet
-    apache::vhost { 'eleventh.example.com':
+   puppetlabs_apache::vhost { 'eleventh.example.com':
       port        => '80',
       docroot     => '/var/www/eleventh',
       scriptalias => '/usr/lib/cgi-bin',
@@ -1464,7 +1569,7 @@ Configure a vhost with a cgi-bin
 Set up a vhost with a rack configuration
 
 ```puppet
-    apache::vhost { 'fifteenth.example.com':
+   puppetlabs_apache::vhost { 'fifteenth.example.com':
       port           => '80',
       docroot        => '/var/www/fifteenth',
       rack_base_uris => ['/rackapp1', '/rackapp2'],
@@ -1477,14 +1582,14 @@ Set up a mix of SSL and non-SSL vhosts at the same domain
 
 ```puppet
     #The non-ssl vhost
-    apache::vhost { 'first.example.com non-ssl':
+   puppetlabs_apache::vhost { 'first.example.com non-ssl':
       servername => 'first.example.com',
       port       => '80',
       docroot    => '/var/www/first',
     }
 
     #The SSL vhost at the same domain
-    apache::vhost { 'first.example.com ssl':
+   puppetlabs_apache::vhost { 'first.example.com ssl':
       servername => 'first.example.com',
       port       => '443',
       docroot    => '/var/www/first',
@@ -1497,14 +1602,14 @@ Set up a mix of SSL and non-SSL vhosts at the same domain
 Configure a vhost to redirect non-SSL connections to SSL
 
 ```puppet
-    apache::vhost { 'sixteenth.example.com non-ssl':
+   puppetlabs_apache::vhost { 'sixteenth.example.com non-ssl':
       servername      => 'sixteenth.example.com',
       port            => '80',
       docroot         => '/var/www/sixteenth',
-      redirect_status => 'permanent'
+      redirect_status => 'permanent',
       redirect_dest   => 'https://sixteenth.example.com/'
     }
-    apache::vhost { 'sixteenth.example.com ssl':
+   puppetlabs_apache::vhost { 'sixteenth.example.com ssl':
       servername => 'sixteenth.example.com',
       port       => '443',
       docroot    => '/var/www/sixteenth',
@@ -1517,19 +1622,19 @@ Configure a vhost to redirect non-SSL connections to SSL
 Set up IP-based vhosts on any listen port and have them respond to requests on specific IP addresses. In this example, we will set listening on ports 80 and 81. This is required because the example vhosts are not declared with a port parameter.
 
 ```puppet
-    apache::listen { '80': }
-    apache::listen { '81': }
+   puppetlabs_apache::listen { '80': }
+   puppetlabs_apache::listen { '81': }
 ```
 
 Then we will set up the IP-based vhosts
 
 ```puppet
-    apache::vhost { 'first.example.com':
+   puppetlabs_apache::vhost { 'first.example.com':
       ip       => '10.0.0.10',
       docroot  => '/var/www/first',
       ip_based => true,
     }
-    apache::vhost { 'second.example.com':
+   puppetlabs_apache::vhost { 'second.example.com':
       ip       => '10.0.0.11',
       docroot  => '/var/www/second',
       ip_based => true,
@@ -1541,14 +1646,14 @@ Then we will set up the IP-based vhosts
 Configure a mix of name-based and IP-based vhosts. First, we will add two IP-based vhosts on 10.0.0.10, one SSL and one non-SSL
 
 ```puppet
-    apache::vhost { 'The first IP-based vhost, non-ssl':
+   puppetlabs_apache::vhost { 'The first IP-based vhost, non-ssl':
       servername => 'first.example.com',
       ip         => '10.0.0.10',
       port       => '80',
       ip_based   => true,
       docroot    => '/var/www/first',
     }
-    apache::vhost { 'The first IP-based vhost, ssl':
+   puppetlabs_apache::vhost { 'The first IP-based vhost, ssl':
       servername => 'first.example.com',
       ip         => '10.0.0.10',
       port       => '443',
@@ -1561,12 +1666,12 @@ Configure a mix of name-based and IP-based vhosts. First, we will add two IP-bas
 Then, we will add two name-based vhosts listening on 10.0.0.20
 
 ```puppet
-    apache::vhost { 'second.example.com':
+   puppetlabs_apache::vhost { 'second.example.com':
       ip      => '10.0.0.20',
       port    => '80',
       docroot => '/var/www/second',
     }
-    apache::vhost { 'third.example.com':
+   puppetlabs_apache::vhost { 'third.example.com':
       ip      => '10.0.0.20',
       port    => '80',
       docroot => '/var/www/third',
@@ -1576,12 +1681,12 @@ Then, we will add two name-based vhosts listening on 10.0.0.20
 If you want to add two name-based vhosts so that they will answer on either 10.0.0.10 or 10.0.0.20, you **MUST** declare `add_listen => 'false'` to disable the otherwise automatic 'Listen 80', as it will conflict with the preceding IP-based vhosts.
 
 ```puppet
-    apache::vhost { 'fourth.example.com':
+   puppetlabs_apache::vhost { 'fourth.example.com':
       port       => '80',
       docroot    => '/var/www/fourth',
       add_listen => false,
     }
-    apache::vhost { 'fifth.example.com':
+   puppetlabs_apache::vhost { 'fifth.example.com':
       port       => '80',
       docroot    => '/var/www/fifth',
       add_listen => false,
@@ -1653,14 +1758,14 @@ To load balance with exported resources, export the `balancermember` from the ba
 Then, on the proxy server, create the balancer cluster
 
 ```puppet
-      apache::balancer { 'puppet00': }
+     puppetlabs_apache::balancer { 'puppet00': }
 ```
 
 To load balance without exported resources, declare the following on the proxy
 
 ```puppet
-    apache::balancer { 'puppet00': }
-    apache::balancermember { "${::fqdn}-puppet00":
+   puppetlabs_apache::balancer { 'puppet00': }
+   puppetlabs_apache::balancermember { "${::fqdn}-puppet00":
         balancer_cluster => 'puppet00',
         url              => "ajp://${::fqdn}:8009"
         options          => ['ping=5', 'disablereuse=on', 'retry=5', 'ttl=120'],
@@ -1672,7 +1777,7 @@ Then declare `apache::balancer` and `apache::balancermember` on the proxy server
 If you need to use ProxySet in the balancer config
 
 ```puppet
-      apache::balancer { 'puppet01':
+     puppetlabs_apache::balancer { 'puppet01':
         proxy_set => {'stickysession' => 'JSESSIONID'},
       }
 ```
@@ -1722,11 +1827,50 @@ The Apache module relies heavily on templates to enable the `vhost` and `apache:
 
 The `apache::vhost::WSGIImportScript` parameter creates a statement inside the VirtualHost which is unsupported on older versions of Apache, causing this to fail.  This will be remedied in a future refactoring.
 
+###RHEL/CentOS 5
+
+The `apache::mod::passenger` and `apache::mod::proxy_html` classes are untested since repositories are missing compatible packages.   
+
+###RHEL/CentOS 7
+
+The `apache::mod::passenger` class is untested as the repository does not have packages for EL7 yet.  The fact that passenger packages aren't available also makes us unable to test the `rack_base_uri` parameter in `apache::vhost`.
+
 ###General
 
-This module is CI tested on Centos 5 & 6, Ubuntu 12.04, Debian 7, and RHEL 5 & 6 platforms against both the OSS and Enterprise version of Puppet. 
+This module is CI tested on Centos 5 & 6, Ubuntu 12.04 & 14.04, Debian 7, and RHEL 5, 6 & 7 platforms against both the OSS and Enterprise version of Puppet. 
 
 The module contains support for other distributions and operating systems, such as FreeBSD and Amazon Linux, but is not formally tested on those and regressions may occur.
+
+###SELinux and Custom Paths
+
+If you are running with SELinux in enforcing mode and want to use custom paths for your `logroot`, `mod_dir`, `vhost_dir`, and `docroot`, you will need to manage the context for the files yourself.
+
+Something along the lines of:
+
+```puppet
+        exec { 'set_apache_defaults':
+          command => 'semanage fcontext -a -t httpd_sys_content_t "/custom/path(/.*)?"',
+          path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+          require => Package['policycoreutils-python'],
+        }
+        package { 'policycoreutils-python': ensure => installed }
+        exec { 'restorecon_apache':
+          command => 'restorecon -Rv /apache_spec',
+          path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+          before  => Service['httpd'],
+          require => Class['puppetlabs_apache'],
+        }
+        class { 'apache': }
+        host { 'test.server': ip => '127.0.0.1' }
+        file { '/custom/path': ensure => directory, }
+        file { '/custom/path/include': ensure => present, content => '#additional_includes' }
+       puppetlabs_apache::vhost { 'test.server':
+          docroot             => '/custom/path',
+          additional_includes => '/custom/path/include',
+        }
+```
+
+You need to set the contexts using `semanage fcontext` not `chcon` because `file {...}` resources will reset the context to the values in the database if the resource isn't specifying the context.
 
 ##Development
 

@@ -77,7 +77,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
           recurse => true,
         }
 
-        apache::vhost { 'first.example.com':
+       puppetlabs_apache::vhost { 'first.example.com':
           port    => '80',
           docroot => '/var/www/first',
           require => File['#{$run_dir}'],
@@ -96,12 +96,13 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
     it 'should configure an apache proxy vhost' do
       pp = <<-EOS
         class { 'apache': }
-        apache::vhost { 'proxy.example.com':
+       puppetlabs_apache::vhost { 'proxy.example.com':
           port    => '80',
           docroot => '/var/www/proxy',
           proxy_pass => [
             { 'path' => '/foo', 'url' => 'http://backend-foo/'},
           ],
+    	  proxy_preserve_host   => true, 
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -111,6 +112,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       it { should contain '<VirtualHost \*:80>' }
       it { should contain "ServerName proxy.example.com" }
       it { should contain "ProxyPass" }
+      it { should contain "ProxyPreserveHost On" }
       it { should_not contain "<Proxy \*>" }
     end
   end
@@ -119,7 +121,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
     it 'should configure two apache vhosts' do
       pp = <<-EOS
         class { 'apache': }
-        apache::vhost { 'first.example.com':
+       puppetlabs_apache::vhost { 'first.example.com':
           port    => '80',
           docroot => '/var/www/first',
         }
@@ -128,7 +130,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
           ensure  => file,
           content => "Hello from first\\n",
         }
-        apache::vhost { 'second.example.com':
+       puppetlabs_apache::vhost { 'second.example.com':
           port    => '80',
           docroot => '/var/www/second',
         }
@@ -165,7 +167,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
 
-          if $apache::apache_version >= 2.4 {
+          if versioncmp($apache::apache_version, '2.4') >= 0 {
             $_files_match_directory = { 'path' => '(\.swp|\.bak|~)$', 'provider' => 'filesmatch', 'require' => 'all denied', }
           } else {
             $_files_match_directory = { 'path' => '(\.swp|\.bak|~)$', 'provider' => 'filesmatch', 'deny' => 'from all', }
@@ -176,7 +178,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
             $_files_match_directory,
           ]
 
-          apache::vhost { 'files.example.net':
+         puppetlabs_apache::vhost { 'files.example.net':
             docroot     => '/var/www/files',
             directories => $_directories,
           }
@@ -209,7 +211,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
 
-          if $apache::apache_version >= 2.4 {
+          if versioncmp($apache::apache_version, '2.4') >= 0 {
             $_files_match_directory = { 'path' => 'private.html$', 'provider' => 'filesmatch', 'require' => 'all denied' }
           } else {
             $_files_match_directory = { 'path' => 'private.html$', 'provider' => 'filesmatch', 'deny' => 'from all' }
@@ -221,7 +223,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
             $_files_match_directory,
           ]
 
-          apache::vhost { 'files.example.net':
+         puppetlabs_apache::vhost { 'files.example.net':
             docroot     => '/var/www/files',
             directories => $_directories,
           }
@@ -252,6 +254,38 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         shell("/usr/bin/curl -sSf files.example.net:80/private.html", {:acceptable_exit_codes => 22}).stderr.should match(/curl: \(22\) The requested URL returned error: 403/)
       end
     end
+
+    describe 'SetHandler directive' do
+      it 'should configure a vhost with a SetHandler directive' do
+        pp = <<-EOS
+          class { 'apache': }
+         puppetlabs_apache::mod { 'status': }
+          host { 'files.example.net': ip => '127.0.0.1', }
+         puppetlabs_apache::vhost { 'files.example.net':
+            docroot     => '/var/www/files',
+            directories => [
+              { path => '/var/www/files', },
+              { path => '/server-status', provider => 'location', sethandler => 'server-status', },
+            ],
+          }
+          file { '/var/www/files/index.html':
+            ensure  => file,
+            content => "Hello World\\n",
+          }
+        EOS
+        apply_manifest(pp, :catch_failures => true)
+      end
+
+      describe service($service_name) do
+        it { should be_enabled }
+        it { should be_running }
+      end
+
+      it 'should answer to files.example.net' do
+        shell("/usr/bin/curl -sSf files.example.net:80/index.html").stdout.should eq("Hello World\n")
+        shell("/usr/bin/curl -sSf files.example.net:80/server-status?auto").stdout.should match(/Scoreboard: /)
+      end
+    end
   end
 
   case fact('lsbdistcodename')
@@ -260,7 +294,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       it 'should configure a vhost with Fallbackresource' do
         pp = <<-EOS
         class { 'apache': }
-        apache::vhost { 'fallback.example.net':
+       puppetlabs_apache::vhost { 'fallback.example.net':
           docroot         => '/var/www/fallback',
           fallbackresource => '/index.html'
         }
@@ -297,7 +331,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
     it 'should configure a vhost with VirtualDocumentRoot' do
       pp = <<-EOS
         class { 'apache': }
-        apache::vhost { 'virt.example.com':
+       puppetlabs_apache::vhost { 'virt.example.com':
           vhost_name      => '*',
           serveraliases   => '*virt.example.com',
           port            => '80',
@@ -336,13 +370,13 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
     it 'should configure a local vhost and a proxy vhost' do
       apply_manifest(%{
         class { 'apache': default_vhost => false, }
-        apache::vhost { 'localhost':
+       puppetlabs_apache::vhost { 'localhost':
           docroot => '/var/www/local',
           ip      => '127.0.0.1',
           port    => '8888',
         }
-        apache::listen { '*:80': }
-        apache::vhost { 'proxy.example.com':
+       puppetlabs_apache::listen { '*:80': }
+       puppetlabs_apache::vhost { 'proxy.example.com':
           docroot    => '/var/www',
           port       => '80',
           add_listen => false,
@@ -378,7 +412,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           ip_based   => true,
           servername => 'test.server',
@@ -398,8 +432,8 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': default_vhost => false }
         host { 'testlisten.server': ip => '127.0.0.1' }
-        apache::listen { '81': }
-        apache::vhost { 'testlisten.server':
+       puppetlabs_apache::listen { '81': }
+       puppetlabs_apache::vhost { 'testlisten.server':
           docroot    => '/tmp',
           port       => '80',
           add_listen => false,
@@ -423,10 +457,11 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         group { 'test_group': ensure => present, }
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot       => '/tmp/test',
           docroot_owner => 'test_owner',
           docroot_group => 'test_group',
+          docroot_mode  => '0750',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -436,6 +471,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       it { should be_directory }
       it { should be_owned_by 'test_owner' }
       it { should be_grouped_into 'test_group' }
+      it { should be_mode 750 }
     end
   end
 
@@ -444,12 +480,23 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           default_vhost => true,
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
+    end
+
+    describe file($ports_file) do
+      it { should be_file }
+      if fact('osfamily') == 'RedHat' and fact('operatingsystemmajrelease') == '7'
+        it { should_not contain 'NameVirtualHost test.server' }
+      elsif fact('operatingsystem') == 'Ubuntu' and fact('operatingsystemrelease') =~ /(14\.04|13\.10)/
+        it { should_not contain 'NameVirtualHost test.server' }
+      else
+        it { should contain 'NameVirtualHost test.server' }
+      end
     end
 
     describe file("#{$vhost_dir}/10-test.server.conf") do
@@ -462,7 +509,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           options    => ['Indexes','FollowSymLinks', 'ExecCGI'],
         }
@@ -481,7 +528,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           override   => ['All'],
         }
@@ -500,7 +547,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           logroot    => '/tmp',
         }
@@ -527,7 +574,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
           host { 'test.server': ip => '127.0.0.1' }
-          apache::vhost { 'test.server':
+         puppetlabs_apache::vhost { 'test.server':
             docroot    => '/tmp',
             logroot    => '/tmp',
             #{logtype}_log => false,
@@ -547,7 +594,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
           host { 'test.server': ip => '127.0.0.1' }
-          apache::vhost { 'test.server':
+         puppetlabs_apache::vhost { 'test.server':
             docroot    => '/tmp',
             logroot    => '/tmp',
             #{logtype}_log_pipe => '|/bin/sh',
@@ -567,7 +614,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
           host { 'test.server': ip => '127.0.0.1' }
-          apache::vhost { 'test.server':
+         puppetlabs_apache::vhost { 'test.server':
             docroot    => '/tmp',
             logroot    => '/tmp',
             #{logtype}_log_syslog => 'syslog',
@@ -588,7 +635,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           logroot    => '/tmp',
           access_log_syslog => 'syslog',
@@ -609,7 +656,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot            => '/tmp',
           logroot            => '/tmp',
           access_log_syslog  => 'syslog',
@@ -630,7 +677,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           aliases => [{ alias => '/image', path => '/ftp/pub/image' }],
         }
@@ -649,7 +696,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           scriptaliases => [{ alias => '/myscript', path  => '/usr/share/myscript', }],
         }
@@ -668,7 +715,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': service_ensure => stopped, }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot    => '/tmp',
           proxy_dest => 'test2',
         }
@@ -682,12 +729,32 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
     end
   end
 
+  describe 'actions' do
+    it 'applies cleanly' do
+      pp = <<-EOS
+        class { 'apache': }
+        host { 'test.server': ip => '127.0.0.1' }
+       puppetlabs_apache::vhost { 'test.server':
+          docroot => '/tmp',
+          action  => 'php-fastcgi',
+        }
+      EOS
+      pp = pp + "\nclass { 'apache::mod::actions': }" if fact('osfamily') == 'Debian'
+      apply_manifest(pp, :catch_failures => true)
+    end
+
+    describe file("#{$vhost_dir}/25-test.server.conf") do
+      it { should be_file }
+      it { should contain 'Action php-fastcgi /cgi-bin virtual' }
+    end
+  end
+
   describe 'suphp' do
     it 'applies cleanly' do
       pp = <<-EOS
         class { 'apache': service_ensure => stopped, }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot          => '/tmp',
           suphp_addhandler => '#{$suphp_handler}',
           suphp_engine     => 'on',
@@ -710,7 +777,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': service_ensure => stopped, }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot          => '/tmp',
           proxy_dest       => 'http://test2',
           no_proxy_uris    => [ 'http://test2/test' ],
@@ -731,7 +798,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot          => '/tmp',
           redirect_source  => ['/images'],
           redirect_dest    => ['http://test.server/'],
@@ -761,7 +828,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         pp = <<-EOS
           class { 'apache': }
           host { 'test.server': ip => '127.0.0.1' }
-          apache::vhost { 'test.server':
+         puppetlabs_apache::vhost { 'test.server':
             docroot          => '/tmp',
             rack_base_uris  => ['/test'],
           }
@@ -782,7 +849,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot          => '/tmp',
           request_headers  => ['append MirrorID "mirror 12"'],
         }
@@ -801,7 +868,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot          => '/tmp',
           rewrites => [
             { comment => 'test',
@@ -827,7 +894,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot  => '/tmp',
           setenv   => ['TEST /test'],
           setenvif => ['Request_URI "\.gif$" object_is_image=gif']
@@ -848,7 +915,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot  => '/tmp',
           block    => 'scm',
         }
@@ -868,13 +935,14 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         class { 'apache': }
         class { 'apache::mod::wsgi': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot                     => '/tmp',
           wsgi_application_group      => '%{GLOBAL}',
           wsgi_daemon_process         => 'wsgi',
           wsgi_daemon_process_options => {processes => '2'},
           wsgi_process_group          => 'nobody',
           wsgi_script_aliases         => { '/test' => '/test1' },
+	  wsgi_pass_authorization     => 'On',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -885,7 +953,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
         class { 'apache': }
         class { 'apache::mod::wsgi': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot                     => '/tmp',
           wsgi_application_group      => '%{GLOBAL}',
           wsgi_daemon_process         => 'wsgi',
@@ -894,6 +962,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
           wsgi_import_script_options  => { application-group => '%{GLOBAL}', process-group => 'wsgi' },
           wsgi_process_group          => 'nobody',
           wsgi_script_aliases         => { '/test' => '/test1' },
+	  wsgi_pass_authorization     => 'On',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -906,6 +975,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       it { should contain 'WSGIImportScript /test1 application-group=%{GLOBAL} process-group=wsgi' }
       it { should contain 'WSGIProcessGroup nobody' }
       it { should contain 'WSGIScriptAlias /test "/test1"' }
+      it { should contain 'WSGIPassAuthorization On' }
     end
   end
 
@@ -914,7 +984,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot  => '/tmp',
           custom_fragment => inline_template('#weird test string'),
         }
@@ -933,7 +1003,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
       pp = <<-EOS
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        apache::vhost { 'test.server':
+       puppetlabs_apache::vhost { 'test.server':
           docroot  => '/tmp',
           itk      => { user => 'nobody', group => 'nobody' }
         }
@@ -948,14 +1018,14 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
   end
 
   # So what does this work on?
-  if default['platform'] !~ /^(debian-(6|7)|el-(5|6))/
+  if default['platform'] !~ /^(debian-(6|7)|el-(5|6|7))/
     describe 'fastcgi' do
       it 'applies cleanly' do
         pp = <<-EOS
           class { 'apache': }
           class { 'apache::mod::fastcgi': }
           host { 'test.server': ip => '127.0.0.1' }
-          apache::vhost { 'test.server':
+         puppetlabs_apache::vhost { 'test.server':
             docroot        => '/tmp',
             fastcgi_server => 'localhost',
             fastcgi_socket => '/tmp/fast/1234',
@@ -976,12 +1046,32 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
   describe 'additional_includes' do
     it 'applies cleanly' do
       pp = <<-EOS
+        if $::osfamily == 'RedHat' and $::selinux == 'true' {
+          exec { 'set_apache_defaults':
+            command => 'semanage fcontext -a -t httpd_sys_content_t "/apache_spec(/.*)?"',
+            path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+            require => Package[$semanage_package],
+          }
+          $semanage_package = $::operatingsystemmajrelease ? {
+            '5'       => 'policycoreutils',
+            'default' => 'policycoreutils-python',
+          }
+
+          package { $semanage_package: ensure => installed }
+          exec { 'restorecon_apache':
+            command => 'restorecon -Rv /apache_spec',
+            path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+            before  => Service['httpd'],
+            require => Class['puppetlabs_apache'],
+          }
+        }
         class { 'apache': }
         host { 'test.server': ip => '127.0.0.1' }
-        file { '/tmp/include': ensure => present, content => '#additional_includes' }
-        apache::vhost { 'test.server':
-          docroot             => '/tmp',
-          additional_includes => '/tmp/include',
+        file { '/apache_spec': ensure => directory, }
+        file { '/apache_spec/include': ensure => present, content => '#additional_includes' }
+       puppetlabs_apache::vhost { 'test.server':
+          docroot             => '/apache_spec',
+          additional_includes => '/apache_spec/include',
         }
       EOS
       apply_manifest(pp, :catch_failures => true)
@@ -989,7 +1079,7 @@ describe 'apache::vhost define', :unless => UNSUPPORTED_PLATFORMS.include?(fact(
 
     describe file("#{$vhost_dir}/25-test.server.conf") do
       it { should be_file }
-      it { should contain 'Include "/tmp/include"' }
+      it { should contain 'Include "/apache_spec/include"' }
     end
   end
 

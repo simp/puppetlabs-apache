@@ -1,6 +1,6 @@
 include apache
-include apache::mod::php
-include apache::mod::cgi
-include apache::mod::userdir
-include apache::mod::disk_cache
-include apache::mod::proxy_http
+includepuppetlabs_apache::mod::php
+includepuppetlabs_apache::mod::cgi
+includepuppetlabs_apache::mod::userdir
+includepuppetlabs_apache::mod::disk_cache
+includepuppetlabs_apache::mod::proxy_http

@@ -44,7 +44,7 @@ describe 'apache ssl', :unless => UNSUPPORTED_PLATFORMS.include?(fact('osfamily'
           service_ensure       => stopped,
         }
 
-        apache::vhost { 'test_ssl':
+       puppetlabs_apache::vhost { 'test_ssl':
           docroot              => '/tmp/test',
           ssl                  => true,
           ssl_cert             => '/tmp/ssl_cert',

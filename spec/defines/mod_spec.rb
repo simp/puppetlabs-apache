@@ -30,7 +30,7 @@ describe 'apache::mod', :type => :define do
     end
 
     describe "with shibboleth module and package param passed" do
-      # name/title for the apache::mod define
+      # name/title for thepuppetlabs_apache::mod define
       let :title do
         'xsendfile'
       end

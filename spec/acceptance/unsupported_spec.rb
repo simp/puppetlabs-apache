@@ -4,7 +4,7 @@ describe 'unsupported distributions and OSes', :if => UNSUPPORTED_PLATFORMS.incl
   it 'should fail' do
     pp = <<-EOS
       class { 'apache': }
-      apache::vhost { 'test.lan':
+     puppetlabs_apache::vhost { 'test.lan':
         docroot => '/var/www',
       }
     EOS

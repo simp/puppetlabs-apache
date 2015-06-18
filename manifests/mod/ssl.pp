@@ -1,7 +1,8 @@
-class apache::mod::ssl (
+class puppetlabs_apache::mod::ssl (
   $ssl_compression = false,
   $ssl_options     = [ 'StdEnvVars' ],
-  $apache_version  = $::apache::apache_version,
+  $ssl_cipher      = 'HIGH:MEDIUM:!aNULL:!MD5',
+  $apache_version  = $::puppetlabs_apache::apache_version,
 ) {
   $session_cache = $::osfamily ? {
     'debian'  => '${APACHE_RUN_DIR}/ssl_scache(512000)',
@@ -11,7 +12,7 @@ class apache::mod::ssl (
 
   case $::osfamily {
     'debian': {
-      if $apache_version >= 2.4 and $::operatingsystem == 'Ubuntu' {
+      if versioncmp($apache_version, '2.4') >= 0 and $::operatingsystem == 'Ubuntu' {
         $ssl_mutex = 'default'
       } elsif $::operatingsystem == 'Ubuntu' and $::operatingsystemrelease == '10.04' {
         $ssl_mutex = 'file:/var/run/apache2/ssl_mutex'
@@ -30,10 +31,10 @@ class apache::mod::ssl (
     }
   }
 
-  ::apache::mod { 'ssl': }
+  ::puppetlabs_apache::mod { 'ssl': }
 
-  if $apache_version >= 2.4 {
-    ::apache::mod { 'socache_shmcb': }
+  if versioncmp($apache_version, '2.4') >= 0 {
+    ::puppetlabs_apache::mod { 'socache_shmcb': }
   }
 
   # Template uses
@@ -46,10 +47,10 @@ class apache::mod::ssl (
   #
   file { 'ssl.conf':
     ensure  => file,
-    path    => "${::apache::mod_dir}/ssl.conf",
-    content => template('apache/mod/ssl.conf.erb'),
-    require => Exec["mkdir ${::apache::mod_dir}"],
-    before  => File[$::apache::mod_dir],
+    path    => "${::puppetlabs_apache::mod_dir}/ssl.conf",
+    content => template('puppetlabs_apache/mod/ssl.conf.erb'),
+    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
+    before  => File[$::puppetlabs_apache::mod_dir],
     notify  => Service['httpd'],
   }
 }

@@ -1,6 +1,6 @@
-class apache::package (
+class puppetlabs_apache::package (
   $ensure     = 'present',
-  $mpm_module = $::apache::params::mpm_module,
+  $mpm_module = $::puppetlabs_apache::params::mpm_module,
 ) {
   case $::osfamily {
     'freebsd' : {
@@ -26,7 +26,7 @@ class apache::package (
         ensure => $ensure,
         path   => '/etc/make.conf',
         line   => "APACHE_PORT=${apache_package}",
-        match  => '^\\s*#?\\s*APACHE_PORT\\s*=\\s*',
+        match  => '^\s*#?\s*APACHE_PORT\s*=\s*',
         before => Package['httpd'],
       }
       # remove other packages
@@ -37,12 +37,12 @@ class apache::package (
       })
     }
     default: {
-      $apache_package = $::apache::params::apache_name
+      $apache_package = $::puppetlabs_apache::params::apache_name
     }
   }
   package { 'httpd':
     ensure => $ensure,
     name   => $apache_package,
-    notify => Class['Apache::Service'],
+    notify => Class['Puppetlabs_apache::Service'],
   }
 }

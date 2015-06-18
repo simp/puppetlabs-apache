@@ -25,7 +25,7 @@ describe 'apache::dev', :type => :class do
   end
   context "on a FreeBSD OS" do
     let :pre_condition do
-      'include apache::package'
+      'includepuppetlabs_apache::package'
     end
     let :facts do
       {

@@ -1,10 +1,10 @@
-class apache::mod::fastcgi {
+class puppetlabs_apache::mod::fastcgi {
 
   # Debian specifies it's fastcgi lib path, but RedHat uses the default value
   # with no config file
-  $fastcgi_lib_path = $::apache::params::fastcgi_lib_path
+  $fastcgi_lib_path = $::puppetlabs_apache::params::fastcgi_lib_path
 
-  ::apache::mod { 'fastcgi': }
+  ::puppetlabs_apache::mod { 'fastcgi': }
 
   if $fastcgi_lib_path {
     # Template uses:
@@ -13,10 +13,10 @@ class apache::mod::fastcgi {
     # - $fastcgi_dir
     file { 'fastcgi.conf':
       ensure  => file,
-      path    => "${::apache::mod_dir}/fastcgi.conf",
-      content => template('apache/mod/fastcgi.conf.erb'),
-      require => Exec["mkdir ${::apache::mod_dir}"],
-      before  => File[$::apache::mod_dir],
+      path    => "${::puppetlabs_apache::mod_dir}/fastcgi.conf",
+      content => template('puppetlabs_apache/mod/fastcgi.conf.erb'),
+      require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
+      before  => File[$::puppetlabs_apache::mod_dir],
       notify  => Service['httpd'],
     }
   }

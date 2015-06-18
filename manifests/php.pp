@@ -1,4 +1,4 @@
-# Class: apache::php
+# Class:puppetlabs_apache::php
 #
 # This class installs PHP for Apache
 #
@@ -12,7 +12,7 @@
 #
 # Sample Usage:
 #
-class apache::php {
-  warning('apache::php is deprecated; please use apache::mod::php')
-  include ::apache::mod::php
+class puppetlabs_apache::php {
+  warning('apache::php is deprecated; please usepuppetlabs_apache::mod::php')
+  include ::puppetlabs_apache::mod::php
 }

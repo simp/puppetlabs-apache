@@ -11,7 +11,7 @@ describe 'apache::mod::suphp class', :unless => UNSUPPORTED_PLATFORMS.include?(f
           }
           class { 'apache::mod::php': }
           class { 'apache::mod::suphp': }
-          apache::vhost { 'suphp.example.com':
+         puppetlabs_apache::vhost { 'suphp.example.com':
             port    => '80',
             docroot => '/var/www/suphp',
           }

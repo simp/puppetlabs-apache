@@ -34,7 +34,7 @@
     AllowOverride None
       <%- end -%>
     <%- end -%>
-    <%- if @apache_version == '2.4' -%>
+    <%- if scope.function_versioncmp([@apache_version, '2.4']) >= 0 -%>
       <%- if directory['require'] and directory['require'] != '' -%>
     Require <%= Array(directory['require']).join(' ') %>
       <%- else -%>
@@ -62,6 +62,9 @@
       <%- [directory['addhandlers']].flatten.compact.each do |addhandler| -%>
     AddHandler <%= addhandler['handler'] %> <%= Array(addhandler['extensions']).join(' ') %>
       <%- end -%>
+    <%- end -%>
+    <%- if directory['sethandler'] and directory['sethandler'] != '' -%>
+    SetHandler <%= directory['sethandler'] %>
     <%- end -%>
     <%- if directory['passenger_enabled'] and directory['passenger_enabled'] != '' -%>
     PassengerEnabled <%= directory['passenger_enabled'] %>

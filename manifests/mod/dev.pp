@@ -1,5 +1,5 @@
-class apache::mod::dev {
+class puppetlabs_apache::mod::dev {
   # Development packages are not apache modules
-  warning('apache::mod::dev is deprecated; please use apache::dev')
-  include ::apache::dev
+  warning('apache::mod::dev is deprecated; please usepuppetlabs_apache::dev')
+  include ::puppetlabs_apache::dev
 }

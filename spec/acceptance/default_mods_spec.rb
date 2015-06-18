@@ -36,7 +36,7 @@ describe 'apache::default_mods class', :unless => UNSUPPORTED_PLATFORMS.include?
         class { 'apache':
           default_mods => false,
         }
-        apache::vhost { 'defaults.example.com':
+       puppetlabs_apache::vhost { 'defaults.example.com':
           docroot => '/var/www/defaults',
           aliases => {
             alias => '/css',
@@ -73,7 +73,7 @@ describe 'apache::default_mods class', :unless => UNSUPPORTED_PLATFORMS.include?
             'expires',
           ],
         }
-        apache::vhost { 'defaults.example.com':
+       puppetlabs_apache::vhost { 'defaults.example.com':
           docroot => '/var/www/defaults',
           aliases => {
             alias => '/css',

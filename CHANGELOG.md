@@ -67,8 +67,8 @@ This release adds preliminary support for Windows compatibility and multiple rew
 - directories are either a Hash or an Array of Hashes
 - Configure Passenger in separate .conf file on RH so PassengerRoot isn't lost
 - (docs) Update list of `apache::mod::[name]` classes
-- (docs) Fix apache::namevirtualhost example call style
-- Fix $ports_file reference in apache::listen.
+- (docs) Fixpuppetlabs_apache::namevirtualhost example call style
+- Fix $ports_file reference inpuppetlabs_apache::listen.
 - Fix $ports_file reference in Namevirtualhost.
 
 
@@ -92,8 +92,8 @@ This release adds FreeBSD osfamily support and various other improvements to som
 - Add ability to include additional external configurations in vhost
 - need to use the provider variable not the provider key value from the directory hash for matches
 - Support for FreeBSD and few other features
-- Add new params to apache::mod::mime class
-- Allow apache::mod to specify module id and path
+- Add new params topuppetlabs_apache::mod::mime class
+- Allowpuppetlabs_apache::mod to specify module id and path
 - added $server_root parameter
 - Add Allow and ExtendedStatus support to mod_status
 - Expand vhost/_directories.pp directive support
@@ -156,8 +156,8 @@ Added `passenger_high_performance`, `passenger_pool_idle_time`,
 `passenger_max_requests`, `passenger_stat_throttle_rate`, `rack_autodetect`,
 and `rails_autodetect` parameters.
 - Separate the httpd service resource into a new `apache::service` class for
-dependency chaining of `Class['apache'] -> <resource> ~>
-Class['apache::service']`
+dependency chaining of `Class['puppetlabs_apache'] -> <resource> ~>
+Class['puppetlabs_apache::service']`
 - Added `apache::mod::proxy_balancer` class for `apache::balancer`
 
 #### Bugfixes:
@@ -234,10 +234,10 @@ worker/prefork
 * a776a8b (#11071) Fix to work with latest firewall module
 * 2b79e8b (#11070) Add support for Scientific Linux
 * 405b3e9 Fix for a2mod
-* 57b9048 Commit apache::vhost::redirect Manifest
-* 8862d01 Commit apache::vhost::proxy Manifest
-* d5c1fd0 Commit apache::mod::wsgi Manifest
-* a825ac7 Commit apache::mod::python Manifest
+* 57b9048 Commitpuppetlabs_apache::vhost::redirect Manifest
+* 8862d01 Commitpuppetlabs_apache::vhost::proxy Manifest
+* d5c1fd0 Commitpuppetlabs_apache::mod::wsgi Manifest
+* a825ac7 Commitpuppetlabs_apache::mod::python Manifest
 * b77062f Commit Templates
 * 9a51b4a Vhost File Declarations
 * 6cf7312 Defaults for Parameters

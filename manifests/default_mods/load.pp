@@ -1,8 +1,8 @@
 # private define
-define apache::default_mods::load ($module = $title) {
-  if defined("apache::mod::${module}") {
-    include "::apache::mod::${module}"
+define puppetlabs_apache::default_mods::load ($module = $title) {
+  if defined("::puppetlabs_apache::mod::${module}") {
+    include "::puppetlabs_apache::mod::${module}"
   } else {
-    ::apache::mod { $module: }
+    ::puppetlabs_apache::mod { $module: }
   }
 }

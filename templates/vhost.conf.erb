@@ -1,5 +1,5 @@
 # ************************************
-# Vhost template in module puppetlabs-apache
+# Vhost template in module puppetlabs-puppetlabs_apache
 # Managed by Puppet
 # ************************************
 
@@ -15,16 +15,16 @@
 <% else -%>
   DocumentRoot "<%= @docroot %>"
 <% end -%>
-<%= scope.function_template(['apache/vhost/_aliases.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_aliases.erb']) -%>
 
-<%= scope.function_template(['apache/vhost/_itk.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_itk.erb']) -%>
 
 <% if @fallbackresource -%>
   FallbackResource <%= @fallbackresource %>
 <% end -%>
 
   ## Directories, there should at least be a declaration for <%= @docroot %>
-<%= scope.function_template(['apache/vhost/_directories.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_directories.erb']) -%>
 
   ## Load additional static includes
 <% Array(@additional_includes).each do |include| %>
@@ -44,21 +44,23 @@
 <% elsif @access_log -%>
   CustomLog "<%= @access_log_destination %>" <%= @_access_log_format %>
 <% end -%>
-<%= scope.function_template(['apache/vhost/_block.erb']) -%>
-<%= scope.function_template(['apache/vhost/_error_document.erb']) -%>
-<%= scope.function_template(['apache/vhost/_proxy.erb']) -%>
-<%= scope.function_template(['apache/vhost/_rack.erb']) -%>
-<%= scope.function_template(['apache/vhost/_redirect.erb']) -%>
-<%= scope.function_template(['apache/vhost/_rewrite.erb']) -%>
-<%= scope.function_template(['apache/vhost/_scriptalias.erb']) -%>
-<%= scope.function_template(['apache/vhost/_serveralias.erb']) -%>
-<%= scope.function_template(['apache/vhost/_setenv.erb']) -%>
-<%= scope.function_template(['apache/vhost/_ssl.erb']) -%>
-<%= scope.function_template(['apache/vhost/_suphp.erb']) -%>
-<%= scope.function_template(['apache/vhost/_php_admin.erb']) -%>
-<%= scope.function_template(['apache/vhost/_header.erb']) -%>
-<%= scope.function_template(['apache/vhost/_requestheader.erb']) -%>
-<%= scope.function_template(['apache/vhost/_wsgi.erb']) -%>
-<%= scope.function_template(['apache/vhost/_custom_fragment.erb']) -%>
-<%= scope.function_template(['apache/vhost/_fastcgi.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_action.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_block.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_error_document.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_proxy.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_rack.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_redirect.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_rewrite.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_scriptalias.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_serveralias.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_setenv.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_ssl.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_suphp.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_php_admin.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_header.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_requestheader.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_wsgi.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_custom_fragment.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_fastcgi.erb']) -%>
+<%= scope.function_template(['puppetlabs_apache/vhost/_suexec.erb']) -%>
 </VirtualHost>

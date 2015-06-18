@@ -1,4 +1,4 @@
-class apache::mod::proxy_http {
-  Class['::apache::mod::proxy'] -> Class['::apache::mod::proxy_http']
-  ::apache::mod { 'proxy_http': }
+class puppetlabs_apache::mod::proxy_http {
+  Class['::puppetlabs_apache::mod::proxy'] -> Class['::puppetlabs_apache::mod::proxy_http']
+  ::puppetlabs_apache::mod { 'proxy_http': }
 }

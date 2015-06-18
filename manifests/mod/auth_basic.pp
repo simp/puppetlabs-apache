@@ -1,3 +1,3 @@
-class apache::mod::auth_basic {
-  ::apache::mod { 'auth_basic': }
+class puppetlabs_apache::mod::auth_basic {
+  ::puppetlabs_apache::mod { 'auth_basic': }
 }
