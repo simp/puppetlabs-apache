@@ -1,5 +1,5 @@
 {
-    "name": "puppetlabs-apache",
+    "name": "puppetlabs-puppetlabs_apache",
     "version": "1.0.1",
     "source": "https://github.com/puppetlabs/puppetlabs-apache",
     "author": "Puppet Labs",
