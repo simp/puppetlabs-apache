@@ -1,5 +1,5 @@
 {
-    "name": "puppetlabs-apache",
+    "name": "puppetlabs-puppetlabs_apache",
     "version": "1.0.1",
     "source": "https://github.com/puppetlabs/puppetlabs-apache",
     "author": "Puppet Labs",
@@ -61,5 +61,14 @@
     "requirements": [
       { "name": "puppet", "version_requirement": "3.x" }
     ],
-    "dependencies": []
+    "dependencies": [
+      {
+        "name": "simp/iptables",
+        "version_requirement": ">= 1.0.0"
+      },
+      {
+        "name": "simp/simpcat",
+        "version_requirement": ">= 1.0.0"
+      }
+    ]
 }
