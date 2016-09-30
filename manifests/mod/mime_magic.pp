@@ -1,14 +1,17 @@
-class puppetlabs_apache::mod::mime_magic (
-  $magic_file = "${::puppetlabs_apache::params::conf_dir}/magic"
+class apache::mod::mime_magic (
+  $magic_file = undef,
 ) {
- puppetlabs_apache::mod { 'mime_magic': }
+  include ::apache
+  $_magic_file = pick($magic_file, "${::apache::conf_dir}/magic")
+  apache::mod { 'mime_magic': }
   # Template uses $magic_file
   file { 'mime_magic.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/mime_magic.conf",
-    content => template('puppetlabs_apache/mod/mime_magic.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    path    => "${::apache::mod_dir}/mime_magic.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/mime_magic.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }

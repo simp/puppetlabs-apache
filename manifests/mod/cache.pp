@@ -1,3 +1,3 @@
-class puppetlabs_apache::mod::cache {
-  ::puppetlabs_apache::mod { 'cache': }
+class apache::mod::cache {
+  ::apache::mod { 'cache': }
 }

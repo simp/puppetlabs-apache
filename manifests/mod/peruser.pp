@@ -1,4 +1,4 @@
-class puppetlabs_apache::mod::peruser (
+class apache::mod::peruser (
   $minspareprocessors = '2',
   $minprocessors = '2',
   $maxprocessors = '10',
@@ -8,66 +8,70 @@ class puppetlabs_apache::mod::peruser (
   $expiretimeout = '120',
   $keepalive = 'Off',
 ) {
-  if defined(Class['puppetlabs_apache::mod::event']) {
-    fail('May not include bothpuppetlabs_apache::mod::peruser andpuppetlabs_apache::mod::event on the same node')
-  }
-  if defined(Class['puppetlabs_apache::mod::itk']) {
-    fail('May not include bothpuppetlabs_apache::mod::peruser andpuppetlabs_apache::mod::itk on the same node')
-  }
-  if defined(Class['puppetlabs_apache::mod::prefork']) {
-    fail('May not include bothpuppetlabs_apache::mod::peruser andpuppetlabs_apache::mod::prefork on the same node')
-  }
-  if defined(Class['puppetlabs_apache::mod::worker']) {
-    fail('May not include bothpuppetlabs_apache::mod::peruser andpuppetlabs_apache::mod::worker on the same node')
-  }
-  File {
-    owner => 'root',
-    group => $::puppetlabs_apache::params::root_group,
-    mode  => '0644',
-  }
-
-  $mod_dir = $::puppetlabs_apache::mod_dir
-
-  # Template uses:
-  # - $minspareprocessors
-  # - $minprocessors
-  # - $maxprocessors
-  # - $maxclients
-  # - $maxrequestsperchild
-  # - $idletimeout
-  # - $expiretimeout
-  # - $keepalive
-  # - $mod_dir
-  file { "${::puppetlabs_apache::mod_dir}/peruser.conf":
-    ensure  => file,
-    content => template('puppetlabs_apache/mod/peruser.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
-  }
-  file { "${::puppetlabs_apache::mod_dir}/peruser":
-    ensure  => directory,
-    require => File[$::puppetlabs_apache::mod_dir],
-  }
-  file { "${::puppetlabs_apache::mod_dir}/peruser/multiplexers":
-    ensure  => directory,
-    require => File["${::puppetlabs_apache::mod_dir}/peruser"],
-  }
-  file { "${::puppetlabs_apache::mod_dir}/peruser/processors":
-    ensure  => directory,
-    require => File["${::puppetlabs_apache::mod_dir}/peruser"],
-  }
-
-  ::puppetlabs_apache::peruser::multiplexer { '01-default': }
 
   case $::osfamily {
     'freebsd' : {
-      class { '::puppetlabs_apache::package':
-        mpm_module => 'peruser'
-      }
+      fail("Unsupported osfamily ${::osfamily}")
     }
     default: {
-      fail("Unsupported osfamily ${::osfamily}")
+      if $::osfamily == 'gentoo' {
+        ::portage::makeconf { 'apache2_mpms':
+          content => 'peruser',
+        }
+      }
+
+      if defined(Class['apache::mod::event']) {
+        fail('May not include both apache::mod::peruser and apache::mod::event on the same node')
+      }
+      if defined(Class['apache::mod::itk']) {
+        fail('May not include both apache::mod::peruser and apache::mod::itk on the same node')
+      }
+      if defined(Class['apache::mod::prefork']) {
+        fail('May not include both apache::mod::peruser and apache::mod::prefork on the same node')
+      }
+      if defined(Class['apache::mod::worker']) {
+        fail('May not include both apache::mod::peruser and apache::mod::worker on the same node')
+      }
+      File {
+        owner => 'root',
+        group => $::apache::params::root_group,
+        mode  => $::apache::file_mode,
+      }
+
+      $mod_dir = $::apache::mod_dir
+
+      # Template uses:
+      # - $minspareprocessors
+      # - $minprocessors
+      # - $maxprocessors
+      # - $maxclients
+      # - $maxrequestsperchild
+      # - $idletimeout
+      # - $expiretimeout
+      # - $keepalive
+      # - $mod_dir
+      file { "${::apache::mod_dir}/peruser.conf":
+        ensure  => file,
+        mode    => $::apache::file_mode,
+        content => template('apache/mod/peruser.conf.erb'),
+        require => Exec["mkdir ${::apache::mod_dir}"],
+        before  => File[$::apache::mod_dir],
+        notify  => Class['apache::service'],
+      }
+      file { "${::apache::mod_dir}/peruser":
+        ensure  => directory,
+        require => File[$::apache::mod_dir],
+      }
+      file { "${::apache::mod_dir}/peruser/multiplexers":
+        ensure  => directory,
+        require => File["${::apache::mod_dir}/peruser"],
+      }
+      file { "${::apache::mod_dir}/peruser/processors":
+        ensure  => directory,
+        require => File["${::apache::mod_dir}/peruser"],
+      }
+
+      ::apache::peruser::multiplexer { '01-default': }
     }
   }
 }

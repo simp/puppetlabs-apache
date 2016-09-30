@@ -1,4 +1,4 @@
-# Class:puppetlabs_apache::service
+# Class: apache::service
 #
 # Manages the Apache daemon
 #
@@ -12,20 +12,23 @@
 # Sample Usage:
 #
 #    sometype { 'foo':
-#      notify => Class['puppetlabs_apache::service'],
+#      notify => Class['apache::service'],
 #    }
 #
 #
-class puppetlabs_apache::service (
-  $service_name   = $::puppetlabs_apache::params::service_name,
+class apache::service (
+  $service_name   = $::apache::params::service_name,
   $service_enable = true,
   $service_ensure = 'running',
+  $service_manage = true,
+  $service_restart = undef
 ) {
   # The base class must be included first because parameter defaults depend on it
-  if ! defined(Class['puppetlabs_apache::params']) {
-    fail('You must include thepuppetlabs_apache::params class before using any apache defined resources')
+  if ! defined(Class['apache::params']) {
+    fail('You must include the apache::params class before using any apache defined resources')
   }
   validate_bool($service_enable)
+  validate_bool($service_manage)
 
   case $service_ensure {
     true, false, 'running', 'stopped': {
@@ -36,9 +39,15 @@ class puppetlabs_apache::service (
     }
   }
 
-  service { 'httpd':
-    ensure => $_service_ensure,
-    name   => $service_name,
-    enable => $service_enable,
+  $service_hasrestart = $service_restart == undef
+
+  if $service_manage {
+    service { 'httpd':
+      ensure     => $_service_ensure,
+      name       => $service_name,
+      enable     => $service_enable,
+      restart    => $service_restart,
+      hasrestart => $service_hasrestart,
+    }
   }
 }

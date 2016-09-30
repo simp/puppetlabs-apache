@@ -12,80 +12,107 @@
 #
 # Sample Usage:
 #
-class puppetlabs_apache (
-  $service_name         = $::puppetlabs_apache::params::service_name,
-  $default_mods         = true,
-  $default_vhost        = true,
-  $default_confd_files  = true,
-  $default_ssl_vhost    = false,
-  $default_ssl_cert     = $::puppetlabs_apache::params::default_ssl_cert,
-  $default_ssl_key      = $::puppetlabs_apache::params::default_ssl_key,
-  $default_ssl_chain    = undef,
-  $default_ssl_ca       = undef,
-  $default_ssl_crl_path = undef,
-  $default_ssl_crl      = undef,
-  $ip                   = undef,
-  $service_enable       = true,
-  $service_ensure       = 'running',
-  $purge_configs        = true,
-  $purge_vdir           = false,
-  $serveradmin          = 'root@localhost',
-  $sendfile             = 'On',
-  $error_documents      = false,
-  $timeout              = '120',
-  $httpd_dir            = $::puppetlabs_apache::params::httpd_dir,
-  $server_root          = $::puppetlabs_apache::params::server_root,
-  $confd_dir            = $::puppetlabs_apache::params::confd_dir,
-  $vhost_dir            = $::puppetlabs_apache::params::vhost_dir,
-  $vhost_enable_dir     = $::puppetlabs_apache::params::vhost_enable_dir,
-  $mod_dir              = $::puppetlabs_apache::params::mod_dir,
-  $mod_enable_dir       = $::puppetlabs_apache::params::mod_enable_dir,
-  $mpm_module           = $::puppetlabs_apache::params::mpm_module,
-  $conf_template        = $::puppetlabs_apache::params::conf_template,
-  $servername           = $::puppetlabs_apache::params::servername,
-  $manage_user          = true,
-  $manage_group         = true,
-  $user                 = $::puppetlabs_apache::params::user,
-  $group                = $::puppetlabs_apache::params::group,
-  $keepalive            = $::puppetlabs_apache::params::keepalive,
-  $keepalive_timeout    = $::puppetlabs_apache::params::keepalive_timeout,
-  $max_keepalive_requests = $::puppetlabs_apache::params::max_keepalive_requests,
-  $logroot              = $::puppetlabs_apache::params::logroot,
-  $log_level            = $::puppetlabs_apache::params::log_level,
-  $log_formats          = {},
-  $ports_file           = $::puppetlabs_apache::params::ports_file,
-  $apache_version       = $::puppetlabs_apache::version::default,
-  $server_tokens        = 'OS',
-  $server_signature     = 'On',
-  $trace_enable         = 'On',
-  $package_ensure       = 'installed',
-  $iptables_allow       = hiera(client_nets)
-) inherits ::puppetlabs_apache::params {
+class apache (
+  $apache_name            = $::apache::params::apache_name,
+  $service_name           = $::apache::params::service_name,
+  $default_mods           = true,
+  $default_vhost          = true,
+  $default_charset        = undef,
+  $default_confd_files    = true,
+  $default_ssl_vhost      = false,
+  $default_ssl_cert       = $::apache::params::default_ssl_cert,
+  $default_ssl_key        = $::apache::params::default_ssl_key,
+  $default_ssl_chain      = undef,
+  $default_ssl_ca         = undef,
+  $default_ssl_crl_path   = undef,
+  $default_ssl_crl        = undef,
+  $default_ssl_crl_check  = undef,
+  $default_type           = 'none',
+  $dev_packages           = $::apache::params::dev_packages,
+  $ip                     = undef,
+  $service_enable         = true,
+  $service_manage         = true,
+  $service_ensure         = 'running',
+  $service_restart        = undef,
+  $purge_configs          = true,
+  $purge_vhost_dir        = undef,
+  $purge_vdir             = false,
+  $serveradmin            = 'root@localhost',
+  $sendfile               = 'On',
+  $error_documents        = false,
+  $timeout                = '120',
+  $httpd_dir              = $::apache::params::httpd_dir,
+  $server_root            = $::apache::params::server_root,
+  $conf_dir               = $::apache::params::conf_dir,
+  $confd_dir              = $::apache::params::confd_dir,
+  $vhost_dir              = $::apache::params::vhost_dir,
+  $vhost_enable_dir       = $::apache::params::vhost_enable_dir,
+  $vhost_include_pattern  = $::apache::params::vhost_include_pattern,
+  $mod_dir                = $::apache::params::mod_dir,
+  $mod_enable_dir         = $::apache::params::mod_enable_dir,
+  $mpm_module             = $::apache::params::mpm_module,
+  $lib_path               = $::apache::params::lib_path,
+  $conf_template          = $::apache::params::conf_template,
+  $servername             = $::apache::params::servername,
+  $pidfile                = $::apache::params::pidfile,
+  $rewrite_lock           = undef,
+  $manage_user            = true,
+  $manage_group           = true,
+  $user                   = $::apache::params::user,
+  $group                  = $::apache::params::group,
+  $keepalive              = $::apache::params::keepalive,
+  $keepalive_timeout      = $::apache::params::keepalive_timeout,
+  $max_keepalive_requests = $::apache::params::max_keepalive_requests,
+  $limitreqfieldsize      = '8190',
+  $logroot                = $::apache::params::logroot,
+  $logroot_mode           = $::apache::params::logroot_mode,
+  $log_level              = $::apache::params::log_level,
+  $log_formats            = {},
+  $ports_file             = $::apache::params::ports_file,
+  $docroot                = $::apache::params::docroot,
+  $apache_version         = $::apache::version::default,
+  $server_tokens          = 'OS',
+  $server_signature       = 'On',
+  $trace_enable           = 'On',
+  $allow_encoded_slashes  = undef,
+  $package_ensure         = 'installed',
+  $use_optional_includes  = $::apache::params::use_optional_includes,
+  $use_systemd            = $::apache::params::use_systemd,
+  $mime_types_additional  = $::apache::params::mime_types_additional,
+  $file_mode              = $::apache::params::file_mode,
+  $root_directory_options = $::apache::params::root_directory_options,
+) inherits ::apache::params {
   validate_bool($default_vhost)
   validate_bool($default_ssl_vhost)
   validate_bool($default_confd_files)
   # true/false is sufficient for both ensure and enable
   validate_bool($service_enable)
+  validate_bool($service_manage)
+  validate_bool($use_optional_includes)
 
   $valid_mpms_re = $apache_version ? {
     '2.4'   => '(event|itk|peruser|prefork|worker)',
     default => '(event|itk|prefork|worker)'
   }
 
-  if $mpm_module {
+  if $mpm_module and $mpm_module != 'false' { # lint:ignore:quoted_booleans
     validate_re($mpm_module, $valid_mpms_re)
+  }
+
+  if $allow_encoded_slashes {
+    validate_re($allow_encoded_slashes, '(^on$|^off$|^nodecode$)', "${allow_encoded_slashes} is not permitted for allow_encoded_slashes. Allowed values are 'on', 'off' or 'nodecode'.")
   }
 
   # NOTE: on FreeBSD it's mpm module's responsibility to install httpd package.
   # NOTE: the same strategy may be introduced for other OSes. For this, you
   # should delete the 'if' block below and modify all MPM modules' manifests
-  # such that they includepuppetlabs_apache::package class (currently event.pp, itk.pp,
+  # such that they include apache::package class (currently event.pp, itk.pp,
   # peruser.pp, prefork.pp, worker.pp).
   if $::osfamily != 'FreeBSD' {
     package { 'httpd':
       ensure => $package_ensure,
-      name   => $::puppetlabs_apache::params::apache_name,
-      notify => Class['Puppetlabs_apache::Service'],
+      name   => $apache_name,
+      notify => Class['Apache::Service'],
     }
   }
   validate_re($sendfile, [ '^[oO]n$' , '^[oO]ff$' ])
@@ -108,15 +135,14 @@ class puppetlabs_apache (
     }
   }
 
-  $valid_log_level_re = '(emerg|alert|crit|error|warn|notice|info|debug)'
+  validate_apache_log_level($log_level)
 
-  validate_re($log_level, $valid_log_level_re,
-  "Log level '${log_level}' is not one of the supported Apache HTTP Server log levels.")
-
-  class { '::puppetlabs_apache::service':
-    service_name   => $service_name,
-    service_enable => $service_enable,
-    service_ensure => $service_ensure,
+  class { '::apache::service':
+    service_name    => $service_name,
+    service_enable  => $service_enable,
+    service_manage  => $service_manage,
+    service_ensure  => $service_ensure,
+    service_restart => $service_restart,
   }
 
   # Deprecated backwards-compatibility
@@ -125,6 +151,13 @@ class puppetlabs_apache (
     $purge_confd = $purge_vdir
   } else {
     $purge_confd = $purge_configs
+  }
+
+  # Set purge vhostd appropriately
+  if $purge_vhost_dir == undef {
+    $purge_vhostd = $purge_confd
+  } else {
+    $purge_vhostd = $purge_vhost_dir
   }
 
   Exec {
@@ -139,7 +172,7 @@ class puppetlabs_apache (
     ensure  => directory,
     recurse => true,
     purge   => $purge_confd,
-    notify  => Class['Puppetlabs_apache::Service'],
+    notify  => Class['Apache::Service'],
     require => Package['httpd'],
   }
 
@@ -154,8 +187,9 @@ class puppetlabs_apache (
       ensure  => directory,
       recurse => true,
       purge   => $purge_mod_dir,
-      notify  => Class['Puppetlabs_apache::Service'],
+      notify  => Class['Apache::Service'],
       require => Package['httpd'],
+      before  => Anchor['::apache::modules_set_up'],
     }
   }
 
@@ -169,7 +203,7 @@ class puppetlabs_apache (
       ensure  => directory,
       recurse => true,
       purge   => $purge_configs,
-      notify  => Class['Puppetlabs_apache::Service'],
+      notify  => Class['Apache::Service'],
       require => Package['httpd'],
     }
   } else {
@@ -184,8 +218,8 @@ class puppetlabs_apache (
     file { $vhost_dir:
       ensure  => directory,
       recurse => true,
-      purge   => $purge_configs,
-      notify  => Class['Puppetlabs_apache::Service'],
+      purge   => $purge_vhostd,
+      notify  => Class['Apache::Service'],
       require => Package['httpd'],
     }
   }
@@ -199,59 +233,79 @@ class puppetlabs_apache (
     file { $vhost_enable_dir:
       ensure  => directory,
       recurse => true,
-      purge   => $purge_configs,
-      notify  => Class['Puppetlabs_apache::Service'],
+      purge   => $purge_vhostd,
+      notify  => Class['Apache::Service'],
       require => Package['httpd'],
     }
   } else {
     $vhost_load_dir = $vhost_dir
   }
 
-#  concat { $ports_file:
-#    owner   => 'root',
-#    group   => $::puppetlabs_apache::params::root_group,
-#    mode    => '0644',
-#    notify  => Class['Puppetlabs_apache::Service'],
-#    require => Package['httpd'],
-#  }
-#  concat::fragment { 'Apache ports header':
-#    ensure  => present,
-#    target  => $ports_file,
-#    content => template('puppetlabs_apache/ports_header.erb')
-#  }
-
-  concat_build { "plabs_apache_ports":
-    target => $ports_file
+  concat { $ports_file:
+    ensure  => present,
+    owner   => 'root',
+    group   => $::apache::params::root_group,
+    mode    => $::apache::file_mode,
+    notify  => Class['Apache::Service'],
+    require => Package['httpd'],
   }
-  concat_fragment { "plabs_apache_ports+apache_ports_header":
-    content => template('puppetlabs_apache/ports_header.erb')
+  concat::fragment { 'Apache ports header':
+    target  => $ports_file,
+    content => template('apache/ports_header.erb')
   }
 
-  if $::puppetlabs_apache::params::conf_dir and $::puppetlabs_apache::params::conf_file {
+  if $::apache::conf_dir and $::apache::params::conf_file {
     case $::osfamily {
       'debian': {
-        $docroot              = '/var/www'
-        $pidfile              = '${APACHE_PID_FILE}'
         $error_log            = 'error.log'
-        $error_documents_path = '/usr/share/apache2/error'
         $scriptalias          = '/usr/lib/cgi-bin'
         $access_log_file      = 'access.log'
       }
       'redhat': {
-        $docroot              = '/var/www/html'
-        $pidfile              = 'run/httpd.pid'
         $error_log            = 'error_log'
-        $error_documents_path = '/var/www/error'
         $scriptalias          = '/var/www/cgi-bin'
         $access_log_file      = 'access_log'
       }
       'freebsd': {
-        $docroot              = '/usr/local/www/apache22/data'
-        $pidfile              = '/var/run/httpd.pid'
         $error_log            = 'httpd-error.log'
-        $error_documents_path = '/usr/local/www/apache22/error'
-        $scriptalias          = '/usr/local/www/apache22/cgi-bin'
+        $scriptalias          = '/usr/local/www/apache24/cgi-bin'
         $access_log_file      = 'httpd-access.log'
+      } 'gentoo': {
+        $error_log            = 'error.log'
+        $error_documents_path = '/usr/share/apache2/error'
+        $scriptalias          = '/var/www/localhost/cgi-bin'
+        $access_log_file      = 'access.log'
+
+        if is_array($default_mods) {
+          if versioncmp($apache_version, '2.4') >= 0 {
+            if defined('apache::mod::ssl') {
+              ::portage::makeconf { 'apache2_modules':
+                content => concat($default_mods, [ 'authz_core', 'socache_shmcb' ]),
+              }
+            } else {
+              ::portage::makeconf { 'apache2_modules':
+                content => concat($default_mods, 'authz_core'),
+              }
+            }
+          } else {
+            ::portage::makeconf { 'apache2_modules':
+              content => $default_mods,
+            }
+          }
+        }
+
+        file { [
+          '/etc/apache2/modules.d/.keep_www-servers_apache-2',
+          '/etc/apache2/vhosts.d/.keep_www-servers_apache-2'
+        ]:
+          ensure  => absent,
+          require => Package['httpd'],
+        }
+      }
+      'Suse': {
+        $error_log            = 'error.log'
+        $scriptalias          = '/usr/lib/cgi-bin'
+        $access_log_file      = 'access.log'
       }
       default: {
         fail("Unsupported osfamily ${::osfamily}")
@@ -261,6 +315,10 @@ class puppetlabs_apache (
     $apxs_workaround = $::osfamily ? {
       'freebsd' => true,
       default   => false
+    }
+
+    if $rewrite_lock {
+      validate_absolute_path($rewrite_lock)
     }
 
     # Template uses:
@@ -284,30 +342,31 @@ class puppetlabs_apache (
     # - $server_tokens
     # - $server_signature
     # - $trace_enable
-    file { "${::puppetlabs_apache::params::conf_dir}/${::puppetlabs_apache::params::conf_file}":
+    # - $rewrite_lock
+    file { "${::apache::conf_dir}/${::apache::params::conf_file}":
       ensure  => file,
       content => template($conf_template),
-      notify  => Class['Puppetlabs_apache::Service'],
-      require => Package['httpd'],
+      notify  => Class['Apache::Service'],
+      require => [Package['httpd'], Concat[$ports_file]],
     }
 
     # preserve back-wards compatibility to the times when default_mods was
     # only a boolean value. Now it can be an array (too)
     if is_array($default_mods) {
-      class { '::puppetlabs_apache::default_mods':
+      class { '::apache::default_mods':
         all  => false,
         mods => $default_mods,
       }
     } else {
-      class { '::puppetlabs_apache::default_mods':
+      class { '::apache::default_mods':
         all => $default_mods,
       }
     }
-    class { '::puppetlabs_apache::default_confd_files':
+    class { '::apache::default_confd_files':
       all => $default_confd_files
     }
-    if $mpm_module {
-      class { "::puppetlabs_apache::mod::${mpm_module}": }
+    if $mpm_module and $mpm_module != 'false' { # lint:ignore:quoted_booleans
+      class { "::apache::mod::${mpm_module}": }
     }
 
     $default_vhost_ensure = $default_vhost ? {
@@ -319,7 +378,7 @@ class puppetlabs_apache (
       false => 'absent'
     }
 
-    ::puppetlabs_apache::vhost { 'default':
+    ::apache::vhost { 'default':
       ensure          => $default_vhost_ensure,
       port            => 80,
       docroot         => $docroot,
@@ -328,13 +387,14 @@ class puppetlabs_apache (
       access_log_file => $access_log_file,
       priority        => '15',
       ip              => $ip,
-      iptables_allow  => $iptables_allow
+      logroot_mode    => $logroot_mode,
+      manage_docroot  => $default_vhost,
     }
     $ssl_access_log_file = $::osfamily ? {
       'freebsd' => $access_log_file,
       default   => "ssl_${access_log_file}",
     }
-    ::puppetlabs_apache::vhost { 'default-ssl':
+    ::apache::vhost { 'default-ssl':
       ensure          => $default_ssl_vhost_ensure,
       port            => 443,
       ssl             => true,
@@ -344,7 +404,12 @@ class puppetlabs_apache (
       access_log_file => $ssl_access_log_file,
       priority        => '15',
       ip              => $ip,
-      iptables_allow  => $iptables_allow
+      logroot_mode    => $logroot_mode,
+      manage_docroot  => $default_ssl_vhost,
     }
   }
+
+  # This anchor can be used as a reference point for things that need to happen *after*
+  # all modules have been put in place.
+  anchor { '::apache::modules_set_up': }
 }

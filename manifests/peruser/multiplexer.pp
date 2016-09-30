@@ -1,6 +1,6 @@
-define puppetlabs_apache::peruser::multiplexer (
-  $user = $::puppetlabs_apache::user,
-  $group = $::puppetlabs_apache::group,
+define apache::peruser::multiplexer (
+  $user = $::apache::user,
+  $group = $::apache::group,
   $file = undef,
 ) {
   if ! $file {
@@ -8,10 +8,10 @@ define puppetlabs_apache::peruser::multiplexer (
   } else {
     $filename = $file
   }
-  file { "${::puppetlabs_apache::mod_dir}/peruser/multiplexers/${filename}":
+  file { "${::apache::mod_dir}/peruser/multiplexers/${filename}":
     ensure  => file,
     content => "Multiplexer ${user} ${group}\n",
-    require => File["${::puppetlabs_apache::mod_dir}/peruser/multiplexers"],
-    notify  => Service['httpd'],
+    require => File["${::apache::mod_dir}/peruser/multiplexers"],
+    notify  => Class['apache::service'],
   }
 }

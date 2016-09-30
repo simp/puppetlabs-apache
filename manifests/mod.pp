@@ -1,27 +1,27 @@
-define puppetlabs_apache::mod (
-  $package = undef,
+define apache::mod (
+  $package        = undef,
   $package_ensure = 'present',
-  $lib = undef,
-  $lib_path = $::puppetlabs_apache::params::lib_path,
-  $id = undef,
-  $path = undef,
-  $loadfiles = undef,
+  $lib            = undef,
+  $lib_path       = $::apache::lib_path,
+  $id             = undef,
+  $path           = undef,
+  $loadfile_name  = undef,
+  $loadfiles      = undef,
 ) {
-  if ! defined(Class['puppetlabs_apache']) {
+  if ! defined(Class['apache']) {
     fail('You must include the apache base class before using any apache defined resources')
   }
 
   $mod = $name
   #include apache #This creates duplicate resources in rspec-puppet
-  $mod_dir = $::puppetlabs_apache::mod_dir
+  $mod_dir = $::apache::mod_dir
 
   # Determine if we have special lib
-  $mod_libs = $::puppetlabs_apache::params::mod_libs
-  $mod_lib = $mod_libs[$mod] # 2.6 compatibility hack
+  $mod_libs = $::apache::params::mod_libs
   if $lib {
     $_lib = $lib
-  } elsif $mod_lib {
-    $_lib = $mod_lib
+  } elsif has_key($mod_libs, $mod) { # 2.6 compatibility hack
+    $_lib = $mod_libs[$mod]
   } else {
     $_lib = "mod_${mod}.so"
   }
@@ -39,13 +39,20 @@ define puppetlabs_apache::mod (
     $_id = "${mod}_module"
   }
 
+  if $loadfile_name {
+    $_loadfile_name = $loadfile_name
+  } else {
+    $_loadfile_name = "${mod}.load"
+  }
+
   # Determine if we have a package
-  $mod_packages = $::puppetlabs_apache::params::mod_packages
-  $mod_package = $mod_packages[$mod] # 2.6 compatibility hack
+  $mod_packages = $::apache::params::mod_packages
   if $package {
     $_package = $package
-  } elsif $mod_package {
-    $_package = $mod_package
+  } elsif has_key($mod_packages, $mod) { # 2.6 compatibility hack
+    $_package = $mod_packages[$mod]
+  } else {
+    $_package = undef
   }
   if $_package and ! defined(Package[$_package]) {
     # note: FreeBSD/ports uses apxs tool to activate modules; apxs clutters
@@ -54,52 +61,58 @@ define puppetlabs_apache::mod (
     # the module gets installed.
     $package_before = $::osfamily ? {
       'freebsd' => [
-        File["${mod}.load"],
-        File["${::puppetlabs_apache::params::conf_dir}/${::puppetlabs_apache::params::conf_file}"]
+        File[$_loadfile_name],
+        File["${::apache::conf_dir}/${::apache::params::conf_file}"]
       ],
-      default => File["${mod}.load"],
+      default => [
+        File[$_loadfile_name],
+        File[$::apache::confd_dir],
+      ],
     }
+    # if there are any packages, they should be installed before the associated conf file
+    Package[$_package] -> File<| title == "${mod}.conf" |>
     # $_package may be an array
     package { $_package:
       ensure  => $package_ensure,
       require => Package['httpd'],
       before  => $package_before,
+      notify  => Class['apache::service'],
     }
   }
 
-  file { "${mod}.load":
+  file { $_loadfile_name:
     ensure  => file,
-    path    => "${mod_dir}/${mod}.load",
+    path    => "${mod_dir}/${_loadfile_name}",
     owner   => 'root',
-    group   => $::puppetlabs_apache::params::root_group,
-    mode    => '0644',
-    content => template('puppetlabs_apache/mod/load.erb'),
+    group   => $::apache::params::root_group,
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/load.erb'),
     require => [
       Package['httpd'],
       Exec["mkdir ${mod_dir}"],
     ],
     before  => File[$mod_dir],
-    notify  => Service['httpd'],
+    notify  => Class['apache::service'],
   }
 
   if $::osfamily == 'Debian' {
-    $enable_dir = $::puppetlabs_apache::mod_enable_dir
-    file{ "${mod}.load symlink":
+    $enable_dir = $::apache::mod_enable_dir
+    file{ "${_loadfile_name} symlink":
       ensure  => link,
-      path    => "${enable_dir}/${mod}.load",
-      target  => "${mod_dir}/${mod}.load",
+      path    => "${enable_dir}/${_loadfile_name}",
+      target  => "${mod_dir}/${_loadfile_name}",
       owner   => 'root',
-      group   => $::puppetlabs_apache::params::root_group,
-      mode    => '0644',
+      group   => $::apache::params::root_group,
+      mode    => $::apache::file_mode,
       require => [
-        File["${mod}.load"],
+        File[$_loadfile_name],
         Exec["mkdir ${enable_dir}"],
       ],
       before  => File[$enable_dir],
-      notify  => Service['httpd'],
+      notify  => Class['apache::service'],
     }
     # Each module may have a .conf file as well, which should be
-    # defined in the class puppetlabs_apache::mod::module
+    # defined in the class apache::mod::module
     # Some modules do not require this file.
     if defined(File["${mod}.conf"]) {
       file{ "${mod}.conf symlink":
@@ -107,15 +120,52 @@ define puppetlabs_apache::mod (
         path    => "${enable_dir}/${mod}.conf",
         target  => "${mod_dir}/${mod}.conf",
         owner   => 'root',
-        group   => $::puppetlabs_apache::params::root_group,
-        mode    => '0644',
+        group   => $::apache::params::root_group,
+        mode    => $::apache::file_mode,
         require => [
           File["${mod}.conf"],
           Exec["mkdir ${enable_dir}"],
         ],
         before  => File[$enable_dir],
-        notify  => Service['httpd'],
+        notify  => Class['apache::service'],
+      }
+    }
+  } elsif $::osfamily == 'Suse' {
+    $enable_dir = $::apache::mod_enable_dir
+    file{ "${_loadfile_name} symlink":
+      ensure  => link,
+      path    => "${enable_dir}/${_loadfile_name}",
+      target  => "${mod_dir}/${_loadfile_name}",
+      owner   => 'root',
+      group   => $::apache::params::root_group,
+      mode    => $::apache::file_mode,
+      require => [
+        File[$_loadfile_name],
+        Exec["mkdir ${enable_dir}"],
+      ],
+      before  => File[$enable_dir],
+      notify  => Class['apache::service'],
+    }
+    # Each module may have a .conf file as well, which should be
+    # defined in the class apache::mod::module
+    # Some modules do not require this file.
+    if defined(File["${mod}.conf"]) {
+      file{ "${mod}.conf symlink":
+        ensure  => link,
+        path    => "${enable_dir}/${mod}.conf",
+        target  => "${mod_dir}/${mod}.conf",
+        owner   => 'root',
+        group   => $::apache::params::root_group,
+        mode    => $::apache::file_mode,
+        require => [
+          File["${mod}.conf"],
+          Exec["mkdir ${enable_dir}"],
+        ],
+        before  => File[$enable_dir],
+        notify  => Class['apache::service'],
       }
     }
   }
+
+  Apache::Mod[$name] -> Anchor['::apache::modules_set_up']
 }

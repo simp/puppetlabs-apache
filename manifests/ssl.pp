@@ -1,9 +1,9 @@
-# Class:puppetlabs_apache::ssl
+# Class: apache::ssl
 #
 # This class installs Apache SSL capabilities
 #
 # Parameters:
-# - The $ssl_package name from thepuppetlabs_apache::params class
+# - The $ssl_package name from the apache::params class
 #
 # Actions:
 #   - Install Apache SSL capabilities
@@ -12,7 +12,7 @@
 #
 # Sample Usage:
 #
-class puppetlabs_apache::ssl {
-  warning('apache::ssl is deprecated; please usepuppetlabs_apache::mod::ssl')
-  include ::puppetlabs_apache::mod::ssl
+class apache::ssl {
+  warning('apache::ssl is deprecated; please use apache::mod::ssl')
+  include ::apache::mod::ssl
 }

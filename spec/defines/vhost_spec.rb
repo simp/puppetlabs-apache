@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'apache::vhost', :type => :define do
   let :pre_condition do
-    'class { "apache": default_vhost => false, }'
+    'class { "apache": default_vhost => false, default_mods => false, vhost_enable_dir => "/etc/apache2/sites-enabled"}'
   end
   let :title do
     'rspec.example.com'
@@ -20,12 +20,17 @@ describe 'apache::vhost', :type => :define do
           :osfamily               => 'RedHat',
           :operatingsystemrelease => '6',
           :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :is_pe                  => false,
         }
       end
       let :params do default_params end
       let :facts do default_facts end
-      it { should contain_class("apache") }
-      it { should contain_class("apache::params") }
+      it { is_expected.to contain_class("apache") }
+      it { is_expected.to contain_class("apache::params") }
     end
     context "on Debian based systems" do
       let :default_facts do
@@ -33,17 +38,23 @@ describe 'apache::vhost', :type => :define do
           :osfamily               => 'Debian',
           :operatingsystemrelease => '6',
           :concat_basedir         => '/dne',
+          :lsbdistcodename        => 'squeeze',
+          :operatingsystem        => 'Debian',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :is_pe                  => false,
         }
       end
       let :params do default_params end
       let :facts do default_facts end
-      it { should contain_class("apache") }
-      it { should contain_class("apache::params") }
-      it { should contain_file("25-rspec.example.com.conf").with(
+      it { is_expected.to contain_class("apache") }
+      it { is_expected.to contain_class("apache::params") }
+      it { is_expected.to contain_concat("25-rspec.example.com.conf").with(
         :ensure => 'present',
         :path   => '/etc/apache2/sites-available/25-rspec.example.com.conf'
       ) }
-      it { should contain_file("25-rspec.example.com.conf symlink").with(
+      it { is_expected.to contain_file("25-rspec.example.com.conf symlink").with(
         :ensure => 'link',
         :path   => '/etc/apache2/sites-enabled/25-rspec.example.com.conf',
         :target => '/etc/apache2/sites-available/25-rspec.example.com.conf'
@@ -55,15 +66,42 @@ describe 'apache::vhost', :type => :define do
           :osfamily               => 'FreeBSD',
           :operatingsystemrelease => '9',
           :concat_basedir         => '/dne',
+          :operatingsystem        => 'FreeBSD',
+          :id                     => 'root',
+          :kernel                 => 'FreeBSD',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :is_pe                  => false,
         }
       end
       let :params do default_params end
       let :facts do default_facts end
-      it { should contain_class("apache") }
-      it { should contain_class("apache::params") }
-      it { should contain_file("25-rspec.example.com.conf").with(
+      it { is_expected.to contain_class("apache") }
+      it { is_expected.to contain_class("apache::params") }
+      it { is_expected.to contain_concat("25-rspec.example.com.conf").with(
         :ensure => 'present',
-        :path   => '/usr/local/etc/apache22/Vhosts/25-rspec.example.com.conf'
+        :path   => '/usr/local/etc/apache24/Vhosts/25-rspec.example.com.conf'
+      ) }
+    end
+    context "on Gentoo systems" do
+      let :default_facts do
+        {
+          :osfamily               => 'Gentoo',
+          :operatingsystem        => 'Gentoo',
+          :operatingsystemrelease => '3.16.1-gentoo',
+          :concat_basedir         => '/dne',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin',
+          :is_pe                  => false,
+        }
+      end
+      let :params do default_params end
+      let :facts do default_facts end
+      it { is_expected.to contain_class("apache") }
+      it { is_expected.to contain_class("apache::params") }
+      it { is_expected.to contain_concat("25-rspec.example.com.conf").with(
+        :ensure => 'present',
+        :path   => '/etc/apache2/vhosts.d/25-rspec.example.com.conf'
       ) }
     end
   end
@@ -73,1343 +111,1164 @@ describe 'apache::vhost', :type => :define do
         :osfamily               => 'Debian',
         :operatingsystemrelease => '6',
         :concat_basedir         => '/dne',
+        :lsbdistcodename        => 'squeeze',
+        :operatingsystem        => 'Debian',
+        :id                     => 'root',
+        :kernel                 => 'Linux',
+        :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        :is_pe                  => false,
       }
     end
     describe 'basic assumptions' do
       let :params do default_params end
-      it { should contain_class("apache") }
-      it { should contain_class("apache::params") }
-      it { should contain_apache__listen(params[:port]) }
-      it { should contain_apache__namevirtualhost("*:#{params[:port]}") }
+      it { is_expected.to contain_class("apache") }
+      it { is_expected.to contain_class("apache::params") }
+      it { is_expected.to contain_apache__listen(params[:port]) }
+      it { is_expected.to contain_apache__namevirtualhost("*:#{params[:port]}") }
     end
+    context 'set everything!' do
+      let :params do
+        {
+          'docroot'                     => '/var/www/foo',
+          'manage_docroot'              => false,
+          'virtual_docroot'             => true,
+          'port'                        => '8080',
+          'ip'                          => '127.0.0.1',
+          'ip_based'                    => true,
+          'add_listen'                  => false,
+          'docroot_owner'               => 'user',
+          'docroot_group'               => 'wheel',
+          'docroot_mode'                => '0664',
+          'serveradmin'                 => 'foo@localhost',
+          'ssl'                         => true,
+          'ssl_cert'                    => '/ssl/cert',
+          'ssl_key'                     => '/ssl/key',
+          'ssl_chain'                   => '/ssl/chain',
+          'ssl_crl_path'                => '/ssl/crl',
+          'ssl_crl'                     => 'foo.crl',
+          'ssl_certs_dir'               => '/ssl/certs',
+          'ssl_protocol'                => 'SSLv2',
+          'ssl_cipher'                  => 'HIGH',
+          'ssl_honorcipherorder'        => 'Off',
+          'ssl_verify_client'           => 'optional',
+          'ssl_verify_depth'            => '3',
+          'ssl_options'                 => '+ExportCertData',
+          'ssl_openssl_conf_cmd'        => 'DHParameters "foo.pem"',
+          'ssl_proxy_verify'            => 'require',
+          'ssl_proxy_check_peer_cn'     => 'on',
+          'ssl_proxy_check_peer_name'   => 'on',
+          'ssl_proxy_check_peer_expire' => 'on',
+          'ssl_proxyengine'             => true,
+          'ssl_proxy_protocol'          => 'TLSv1.2',
 
-    # All match and notmatch should be a list of regexs and exact match strings
-    context ".conf content" do
-      [
-        {
-          :title => 'should contain docroot',
-          :attr  => 'docroot',
-          :value => '/not/default',
-          :match => [/^  DocumentRoot "\/not\/default"$/,/  <Directory "\/not\/default">/],
-        },
-        {
-          :title => 'should set a port',
-          :attr  => 'port',
-          :value => '8080',
-          :match => [/^<VirtualHost \*:8080>$/],
-        },
-        {
-          :title => 'should set an ip',
-          :attr  => 'ip',
-          :value => '10.0.0.1',
-          :match => [/^<VirtualHost 10\.0\.0\.1:84>$/],
-        },
-        {
-          :title => 'should set a serveradmin',
-          :attr  => 'serveradmin',
-          :value => 'test@test.com',
-          :match => [/^  ServerAdmin test@test.com$/],
-        },
-        {
-          :title => 'should enable ssl',
-          :attr  => 'ssl',
-          :value => true,
-          :match => [/^  SSLEngine on$/],
-        },
-        {
-          :title => 'should set a servername',
-          :attr  => 'servername',
-          :value => 'param.test',
-          :match => [/^  ServerName param.test$/],
-        },
-        {
-          :title => 'should accept server aliases',
-          :attr  => 'serveraliases',
-          :value => ['one.com','two.com'],
-          :match => [
-            /^  ServerAlias one\.com$/,
-            /^  ServerAlias two\.com$/
-          ],
-        },
-        {
-          :title => 'should accept setenv',
-          :attr  => 'setenv',
-          :value => ['TEST1 one','TEST2 two'],
-          :match => [
-            /^  SetEnv TEST1 one$/,
-            /^  SetEnv TEST2 two$/
-          ],
-        },
-        {
-          :title => 'should accept setenvif',
-          :attr  => 'setenvif',
-          ## These are bugged in rspec-puppet; the $1 is droped
-          #:value => ['Host "^([^\.]*)\.website\.com$" CLIENT_NAME=$1'],
-          #:match => ['  SetEnvIf Host "^([^\.]*)\.website\.com$" CLIENT_NAME=$1'],
-          :value => ['Host "^test\.com$" VHOST_ACCESS=test'],
-          :match => [/^  SetEnvIf Host "\^test\\.com\$" VHOST_ACCESS=test$/],
-        },
-        {
-          :title => 'should accept options',
-          :attr  => 'options',
-          :value => ['Fake','Options'],
-          :match => [/^    Options Fake Options$/],
-        },
-        {
-          :title => 'should accept overrides',
-          :attr  => 'override',
-          :value => ['Fake', 'Override'],
-          :match => [/^    AllowOverride Fake Override$/],
-        },
-        {
-          :title => 'should accept logroot',
-          :attr  => 'logroot',
-          :value => '/fake/log',
-          :match => [/CustomLog "\/fake\/log\//,/ErrorLog "\/fake\/log\//],
-        },
-        {
-          :title => 'should accept log_level',
-          :attr  => 'log_level',
-          :value => 'info',
-          :match => [/LogLevel info/],
-        },
-        {
-          :title => 'should accept pipe destination for access log',
-          :attr  => 'access_log_pipe',
-          :value => '| /bin/fake/logging',
-          :match => [/CustomLog "| \/bin\/fake\/logging" combined$/],
-        },
-        {
-          :title => 'should accept pipe destination for error log',
-          :attr  => 'error_log_pipe',
-          :value => '| /bin/fake/logging',
-          :match => [/ErrorLog "| \/bin\/fake\/logging" combined$/],
-        },
-        {
-          :title => 'should accept syslog destination for access log',
-          :attr  => 'access_log_syslog',
-          :value => 'syslog:local1',
-          :match => [/CustomLog "syslog:local1" combined$/],
-        },
-        {
-          :title => 'should accept syslog destination for error log',
-          :attr  => 'error_log_syslog',
-          :value => 'syslog',
-          :match => [/ErrorLog "syslog"$/],
-        },
-        {
-          :title => 'should accept custom format for access logs',
-          :attr  => 'access_log_format',
-          :value => '%h %{X-Forwarded-For}i %l %u %t \"%r\" %s %b  \"%{Referer}i\" \"%{User-agent}i\" \"Host: %{Host}i\" %T %D',
-          :match => [/CustomLog "\/var\/log\/.+_access\.log" "%h %\{X-Forwarded-For\}i %l %u %t \\"%r\\" %s %b  \\"%\{Referer\}i\\" \\"%\{User-agent\}i\\" \\"Host: %\{Host\}i\\" %T %D"$/],
-        },
-        {
-          :title => 'should contain access logs',
-          :attr  => 'access_log',
-          :value => true,
-          :match => [/CustomLog "\/var\/log\/.+_access\.log" combined$/],
-        },
-        {
-          :title    => 'should not contain access logs',
-          :attr     => 'access_log',
-          :value    => false,
-          :notmatch => [/CustomLog "\/var\/log\/.+_access\.log" combined$/],
-        },
-        {
-          :title => 'should contain error logs',
-          :attr  => 'error_log',
-          :value => true,
-          :match => [/ErrorLog.+$/],
-        },
-        {
-          :title    => 'should not contain error logs',
-          :attr     => 'error_log',
-          :value    => false,
-          :notmatch => [/ErrorLog.+$/],
-        },
-        {
-          :title    => 'should set ErrorDocument 503',
-          :attr     => 'error_documents',
-          :value    => [ { 'error_code' => '503', 'document' => '"Go away, the backend is broken."'}],
-          :match => [/^  ErrorDocument 503 "Go away, the backend is broken."$/],
-        },
-        {
-          :title    => 'should set ErrorDocuments 503 407',
-          :attr     => 'error_documents',
-          :value    => [
-            { 'error_code' => '503', 'document' => '/service-unavail'},
-            { 'error_code' => '407', 'document' => 'https://example.com/proxy/login'},
-          ],
-          :match => [
-            /^  ErrorDocument 503 \/service-unavail$/,
-            /^  ErrorDocument 407 https:\/\/example\.com\/proxy\/login$/,
-          ],
-        },
-        {
-          :title    => 'should set ErrorDocument 503 in directory',
-          :attr     => 'directories',
-          :value    => { 'path' => '/srv/www', 'error_documents' => [{ 'error_code' => '503', 'document' => '"Go away, the backend is broken."'}] },
-          :match => [/^    ErrorDocument 503 "Go away, the backend is broken."$/],
-        },
-        {
-          :title    => 'should set ErrorDocuments 503 407 in directory',
-          :attr     => 'directories',
-          :value    => { 'path' => '/srv/www', 'error_documents' =>
-          [
-            { 'error_code' => '503', 'document' => '/service-unavail'},
-            { 'error_code' => '407', 'document' => 'https://example.com/proxy/login'},
-          ]},
-          :match => [
-            /^    ErrorDocument 503 \/service-unavail$/,
-            /^    ErrorDocument 407 https:\/\/example\.com\/proxy\/login$/,
-          ],
-        },
-        {
-          :title => 'should accept a scriptalias',
-          :attr  => 'scriptalias',
-          :value => '/usr/scripts',
-          :match => [
-            /^  ScriptAlias \/cgi-bin "\/usr\/scripts"$/,
-          ],
-        },
-        {
-          :title    => 'should accept a single scriptaliases',
-          :attr     => 'scriptaliases',
-          :value    => { 'alias' => '/blah/', 'path' => '/usr/scripts' },
-          :match    => [
-            /^  ScriptAlias \/blah\/ "\/usr\/scripts"$/,
-          ],
-          :nomatch  => [/ScriptAlias \/cgi\-bin\//],
-        },
-        {
-          :title    => 'should accept multiple scriptaliases',
-          :attr     => 'scriptaliases',
-          :value    => [ { 'alias' => '/blah', 'path' => '/usr/scripts' }, { 'alias' => '/blah2', 'path' => '/usr/scripts' } ],
-          :match    => [
-            /^  ScriptAlias \/blah "\/usr\/scripts"$/,
-            /^  ScriptAlias \/blah2 "\/usr\/scripts"$/,
-          ],
-          :nomatch  => [/ScriptAlias \/cgi\-bin\//],
-        },
-        {
-          :title    => 'should accept multiple scriptaliases with and without trailing slashes',
-          :attr     => 'scriptaliases',
-          :value    => [ { 'alias' => '/blah', 'path' => '/usr/scripts' }, { 'alias' => '/blah2/', 'path' => '/usr/scripts2/' } ],
-          :match    => [
-            /^  ScriptAlias \/blah "\/usr\/scripts"$/,
-            /^  ScriptAlias \/blah2\/ "\/usr\/scripts2\/"$/,
-          ],
-          :nomatch  => [/ScriptAlias \/cgi\-bin\//],
-        },
-        {
-          :title    => 'should accept a ScriptAliasMatch directive',
-          :attr     => 'scriptaliases',
-          ## XXX As mentioned above, rspec-puppet drops constructs like $1.
-          ## Thus, these tests don't work as they should. As a workaround we
-          ## use FOO instead of $1 here.
-          :value    => [ { 'aliasmatch' => '^/cgi-bin(.*)', 'path' => '/usr/local/apache/cgi-binFOO' } ],
-          :match    => [
-            /^  ScriptAliasMatch \^\/cgi-bin\(\.\*\) "\/usr\/local\/apache\/cgi-binFOO"$/
-          ],
-        },
-        {
-          :title    => 'should accept multiple ScriptAliasMatch directives',
-          :attr     => 'scriptaliases',
-          ## XXX As mentioned above, rspec-puppet drops constructs like $1.
-          ## Thus, these tests don't work as they should. As a workaround we
-          ## use FOO instead of $1 here.
-          :value    => [
-            { 'aliasmatch' => '^/cgi-bin(.*)', 'path' => '/usr/local/apache/cgi-binFOO' },
-            { 'aliasmatch' => '"(?x)^/git/(.*/(HEAD|info/refs|objects/(info/[^/]+|[0-9a-f]{2}/[0-9a-f]{38}|pack/pack-[0-9a-f]{40}\.(pack|idx))|git-(upload|receive)-pack))"', 'path' => '/var/www/bin/gitolite-suexec-wrapper/FOO' },
-          ],
-          :match    => [
-            /^  ScriptAliasMatch \^\/cgi-bin\(\.\*\) "\/usr\/local\/apache\/cgi-binFOO"$/,
-            /^  ScriptAliasMatch "\(\?x\)\^\/git\/\(\.\*\/\(HEAD\|info\/refs\|objects\/\(info\/\[\^\/\]\+\|\[0-9a-f\]\{2\}\/\[0-9a-f\]\{38\}\|pack\/pack-\[0-9a-f\]\{40\}\\\.\(pack\|idx\)\)\|git-\(upload\|receive\)-pack\)\)" "\/var\/www\/bin\/gitolite-suexec-wrapper\/FOO"$/,
-          ],
-        },
-        {
-          :title    => 'should accept mixed ScriptAlias and ScriptAliasMatch directives',
-          :attr     => 'scriptaliases',
-          ## XXX As mentioned above, rspec-puppet drops constructs like $1.
-          ## Thus, these tests don't work as they should. As a workaround we
-          ## use FOO instead of $1 here.
-          :value    => [
-            { 'aliasmatch' => '"(?x)^/git/(.*/(HEAD|info/refs|objects/(info/[^/]+|[0-9a-f]{2}/[0-9a-f]{38}|pack/pack-[0-9a-f]{40}\.(pack|idx))|git-(upload|receive)-pack))"', 'path' => '/var/www/bin/gitolite-suexec-wrapper/FOO' },
-            { 'alias' => '/git', 'path' => '/var/www/gitweb/index.cgi' },
-            { 'aliasmatch' => '^/cgi-bin(.*)', 'path' => '/usr/local/apache/cgi-binFOO' },
-            { 'alias' => '/trac', 'path' => '/etc/apache2/trac.fcgi' },
-          ],
-          :match    => [
-            /^  ScriptAliasMatch "\(\?x\)\^\/git\/\(\.\*\/\(HEAD\|info\/refs\|objects\/\(info\/\[\^\/\]\+\|\[0-9a-f\]\{2\}\/\[0-9a-f\]\{38\}\|pack\/pack-\[0-9a-f\]\{40\}\\\.\(pack\|idx\)\)\|git-\(upload\|receive\)-pack\)\)" "\/var\/www\/bin\/gitolite-suexec-wrapper\/FOO"$/,
-            /^  ScriptAlias \/git "\/var\/www\/gitweb\/index\.cgi"$/,
-            /^  ScriptAliasMatch \^\/cgi-bin\(\.\*\) "\/usr\/local\/apache\/cgi-binFOO"$/,
-            /^  ScriptAlias \/trac "\/etc\/apache2\/trac.fcgi"$/,
-          ],
-        },
-        {
-          :title    => 'should accept proxy destinations',
-          :attr     => 'proxy_dest',
-          :value    => 'http://fake.com',
-          :match    => [
-            /^  ProxyPass          \/ http:\/\/fake.com\/$/,
-            /^  <Location          \/>$/,
-            /^    ProxyPassReverse http:\/\/fake.com\/$/,
-            /^  <\/Location>$/,
-          ],
-          :notmatch => [/ProxyPass .+!$/],
-        },
-        {
-          :title    => 'should accept proxy_pass hash',
-          :attr     => 'proxy_pass',
-          :value    => { 'path' => '/path-a', 'url' => 'http://fake.com/a' },
-          :match    => [
-            /^  ProxyPass \/path-a http:\/\/fake.com\/a$/,
-            /^  <Location \/path-a>$/,
-            /^    ProxyPassReverse http:\/\/fake.com\/a$/,
-            /^  <\/Location>$/,
-
-          ],
-          :notmatch => [/ProxyPass .+!$/],
-        },
-        {
-          :title    => 'should accept proxy_pass array of hash',
-          :attr     => 'proxy_pass',
-          :value    => [
-            { 'path' => '/path-a/', 'url' => 'http://fake.com/a/' },
-            { 'path' => '/path-b', 'url' => 'http://fake.com/b' },
-          ],
-          :match    => [
-            /^  ProxyPass \/path-a\/ http:\/\/fake.com\/a\/$/,
-            /^  <Location \/path-a\/>$/,
-            /^    ProxyPassReverse http:\/\/fake.com\/a\/$/,
-            /^  <\/Location>$/,
-            /^  ProxyPass \/path-b http:\/\/fake.com\/b$/,
-            /^  <Location \/path-b>$/,
-            /^    ProxyPassReverse http:\/\/fake.com\/b$/,
-            /^  <\/Location>$/,
-          ],
-          :notmatch => [/ProxyPass .+!$/],
-        },
-        {
-          :title => 'should enable rack',
-          :attr  => 'rack_base_uris',
-          :value => ['/rack1','/rack2'],
-          :match => [
-            /^  RackBaseURI \/rack1$/,
-            /^  RackBaseURI \/rack2$/,
-          ],
-        },
-        {
-          :title => 'should accept headers',
-          :attr  => 'headers',
-          :value => ['add something', 'merge something_else'],
-          :match => [
-            /^  Header add something$/,
-            /^  Header merge something_else$/,
-          ],
-        },
-        {
-          :title => 'should accept request headers',
-          :attr  => 'request_headers',
-          :value => ['append something', 'unset something_else'],
-          :match => [
-            /^  RequestHeader append something$/,
-            /^  RequestHeader unset something_else$/,
-          ],
-        },
-        {
-          :title => 'should accept rewrite rules',
-          :attr  => 'rewrite_rule',
-          :value => 'not a real rule',
-          :match => [/^  RewriteRule not a real rule$/],
-        },
-        {
-          :title => 'should accept rewrite rules',
-          :attr  => 'rewrites',
-          :value => [{'rewrite_rule' => ['not a real rule']}],
-          :match => [/^  RewriteRule not a real rule$/],
-        },
-        {
-          :title => 'should accept rewrite comment',
-          :attr  => 'rewrites',
-          :value => [{'comment' => 'rewrite comment', 'rewrite_rule' => ['not a real rule']}],
-          :match => [/^  #rewrite comment/],
-        },
-        {
-          :title => 'should accept rewrite conditions',
-          :attr  => 'rewrites',
-          :value => [{'comment' => 'redirect IE', 'rewrite_cond' => ['%{HTTP_USER_AGENT} ^MSIE'], 'rewrite_rule' => ['^index\.html$ welcome.html'],}],
-          :match => [
-            /^  #redirect IE$/,
-            /^  RewriteCond %{HTTP_USER_AGENT} \^MSIE$/,
-            /^  RewriteRule \^index\\\.html\$ welcome.html$/,
-          ],
-        },
-        {
-          :title => 'should accept multiple rewrites',
-          :attr  => 'rewrites',
-          :value => [
-            {'rewrite_rule' => ['not a real rule']},
-            {'rewrite_rule' => ['not a real rule two']},
-          ],
-          :match => [
-            /^  RewriteRule not a real rule$/,
-            /^  RewriteRule not a real rule two$/,
-          ],
-        },
-        {
-          :title => 'should block scm',
-          :attr  => 'block',
-          :value => 'scm',
-          :match => [/^  <DirectoryMatch \.\*\\\.\(svn\|git\|bzr\)\/\.\*>$/],
-        },
-        {
-          :title => 'should accept a custom fragment',
-          :attr  => 'custom_fragment',
-          :value => "  Some custom fragment line\n  That spans multiple lines",
-          :match => [
-            /^  Some custom fragment line$/,
-            /^  That spans multiple lines$/,
-            /^<\/VirtualHost>$/,
-          ],
-        },
-        {
-          :title => 'should accept an array of alias hashes',
-          :attr  => 'aliases',
-          :value => [ { 'alias' => '/', 'path' => '/var/www'} ],
-          :match => [/^  Alias \/ "\/var\/www"$/],
-        },
-        {
-          :title => 'should accept an alias hash',
-          :attr  => 'aliases',
-          :value => { 'alias' => '/', 'path' => '/var/www'},
-          :match => [/^  Alias \/ "\/var\/www"$/],
-        },
-        {
-          :title => 'should accept multiple aliases',
-          :attr  => 'aliases',
-          :value => [
-            { 'alias' => '/', 'path' => '/var/www'},
-            { 'alias' => '/cgi-bin', 'path' => '/var/www/cgi-bin'},
-            { 'alias' => '/css', 'path' => '/opt/someapp/css'},
-          ],
-          :match => [
-            /^  Alias \/ "\/var\/www"$/,
-            /^  Alias \/cgi-bin "\/var\/www\/cgi-bin"$/,
-            /^  Alias \/css "\/opt\/someapp\/css"$/,
-          ],
-        },
-        {
-          :title => 'should accept an aliasmatch hash',
-          :attr  => 'aliases',
-          ## XXX As mentioned above, rspec-puppet drops the $1. Thus, these
-          # tests don't work.
-          #:value => { 'aliasmatch' => '^/image/(.*).gif', 'path' => '/files/gifs/$1.gif' },
-          #:match => [/^  AliasMatch \^\/image\/\(\.\*\)\.gif \/files\/gifs\/\$1\.gif$/],
-        },
-        {
-          :title => 'should accept a array of alias and aliasmatch hashes mixed',
-          :attr  => 'aliases',
-          ## XXX As mentioned above, rspec-puppet drops the $1. Thus, these
-          # tests don't work.
-          #:value => [
-          #  { 'alias' => '/css', 'path' => '/files/css' },
-          #  { 'aliasmatch' => '^/image/(.*).gif', 'path' => '/files/gifs/$1.gif' },
-          #  { 'aliasmatch' => '^/image/(.*).jpg', 'path' => '/files/jpgs/$1.jpg' },
-          #  { 'alias' => '/image', 'path' => '/files/images' },
-          #],
-          #:match => [
-          #  /^  Alias \/css \/files\/css$/,
-          #  /^  AliasMatch \^\/image\/\(.\*\)\.gif \/files\/gifs\/\$1\.gif$/,
-          #  /^  AliasMatch \^\/image\/\(.\*\)\.jpg \/files\/jpgs\/\$1\.jpg$/,
-          #  /^  Alias \/image \/files\/images$/
-          #],
-        },
-        {
-          :title => 'should accept multiple additional includes',
-          :attr  => 'additional_includes',
-          :value => [
-            '/tmp/proxy_group_a',
-            '/tmp/proxy_group_b',
-            '/tmp/proxy_group_c',
-          ],
-          :match => [
-            /^  Include "\/tmp\/proxy_group_a"$/,
-            /^  Include "\/tmp\/proxy_group_b"$/,
-            /^  Include "\/tmp\/proxy_group_c"$/,
-          ],
-        },
-        {
-          :title => 'should accept a suPHP_Engine',
-          :attr  => 'suphp_engine',
-          :value => 'on',
-          :match => [/^  suPHP_Engine on$/],
-        },
-        {
-          :title => 'should accept a php_admin_flags',
-          :attr  => 'php_admin_flags',
-          :value => { 'engine' => 'on' },
-          :match => [/^  php_admin_flag engine on$/],
-        },
-        {
-          :title => 'should accept php_admin_values',
-          :attr  => 'php_admin_values',
-          :value => { 'open_basedir' => '/srv/web/www.com/:/usr/share/pear/' },
-          :match => [/^  php_admin_value open_basedir \/srv\/web\/www.com\/:\/usr\/share\/pear\/$/],
-        },
-        {
-          :title => 'should accept php_admin_flags in directories',
-          :attr  => 'directories',
-          :value => {
-						'path'            => '/srv/www',
-						'php_admin_flags' => { 'php_engine' => 'on' }
-					},
-          :match => [/^    php_admin_flag php_engine on$/],
-        },
-        {
-          :title => 'should accept php_admin_values',
-          :attr  => 'php_admin_values',
-          :value => { 'open_basedir' => '/srv/web/www.com/:/usr/share/pear/' },
-          :match => [/^  php_admin_value open_basedir \/srv\/web\/www.com\/:\/usr\/share\/pear\/$/],
-        },
-        {
-          :title => 'should accept php_admin_values in directories',
-          :attr  => 'directories',
-          :value => {
-            'path'             => '/srv/www',
-            'php_admin_values' => { 'open_basedir' => '/srv/web/www.com/:/usr/share/pear/' }
-          },
-          :match => [/^    php_admin_value open_basedir \/srv\/web\/www.com\/:\/usr\/share\/pear\/$/],
-        },
-        {
-          :title => 'should accept a wsgi script alias',
-          :attr  => 'wsgi_script_aliases',
-          :value => { '/' => '/var/www/myapp.wsgi'},
-          :match => [/^  WSGIScriptAlias \/ "\/var\/www\/myapp.wsgi"$/],
-        },
-        {
-          :title => 'should accept multiple wsgi aliases',
-          :attr  => 'wsgi_script_aliases',
-          :value => {
-            '/wiki' => '/usr/local/wsgi/scripts/mywiki.wsgi',
-            '/blog' => '/usr/local/wsgi/scripts/myblog.wsgi',
-            '/'     => '/usr/local/wsgi/scripts/myapp.wsgi',
-          },
-          :match => [
-            /^  WSGIScriptAlias \/wiki "\/usr\/local\/wsgi\/scripts\/mywiki.wsgi"$/,
-            /^  WSGIScriptAlias \/blog "\/usr\/local\/wsgi\/scripts\/myblog.wsgi"$/,
-            /^  WSGIScriptAlias \/ "\/usr\/local\/wsgi\/scripts\/myapp.wsgi"$/,
-          ],
-        },
-        {
-          :title => 'should accept a wsgi application group',
-          :attr  => 'wsgi_application_group',
-          :value => '%{GLOBAL}',
-          :match => [/^  WSGIApplicationGroup %{GLOBAL}$/],
-        },
-        {
-          :title => 'should set wsgi pass authorization',
-          :attr  => 'wsgi_pass_authorization',
-          :value => 'On',
-          :match => [/^  WSGIPassAuthorization On$/],
-        },
-        {
-          :title => 'should set wsgi pass authorization false',
-          :attr  => 'wsgi_pass_authorization',
-          :value => 'Off',
-          :match => [/^  WSGIPassAuthorization Off$/],
-        },
-        {
-          :title => 'should contain environment variables',
-          :attr  => 'access_log_env_var',
-          :value => 'admin',
-          :match => [/CustomLog "\/var\/log\/.+_access\.log" combined env=admin$/]
-        },
-        {
-          :title => 'should contain virtual_docroot',
-          :attr  => 'virtual_docroot',
-          :value => '/not/default',
-          :match => [
-            /^  VirtualDocumentRoot "\/not\/default"$/,
-          ],
-        },
-        {
-          :title    => 'should accept multiple directories',
-          :attr     => 'directories',
-          :value    => [
-            { 'path' => '/opt/app' },
-            { 'path' => '/var/www' },
-            { 'path' => '/rspec/docroot'}
-          ],
-          :match    => [
-            /^  <Directory "\/opt\/app">$/,
-            /^  <Directory "\/var\/www">$/,
-            /^  <Directory "\/rspec\/docroot">$/,
-          ],
-        },
-      ].each do |param|
-        describe "when #{param[:attr]} is #{param[:value]}" do
-          let :params do default_params.merge({ param[:attr].to_sym => param[:value] }) end
-
-          it { should contain_file("25-#{title}.conf").with_mode('0644') }
-          if param[:match]
-            it "#{param[:title]}: matches" do
-              param[:match].each do |match|
-                should contain_file("25-#{title}.conf").with_content( match )
-              end
-            end
-          end
-          if param[:notmatch]
-            it "#{param[:title]}: notmatches" do
-              param[:notmatch].each do |notmatch|
-                should_not contain_file("25-#{title}.conf").with_content( notmatch )
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # Apache below 2.4 (Default Version). All match and notmatch should be a list of regexs and exact match strings
-    context ".conf content with $apache_version < 2.4" do
-      [
-        {
-          :title    => 'should accept a directory',
-          :attr     => 'directories',
-          :value    => { 'path' => '/opt/app' },
-          :notmatch => ['  <Directory /rspec/docroot>'],
-          :match    => [
-            /^  <Directory "\/opt\/app">$/,
-            /^    AllowOverride None$/,
-            /^    Order allow,deny$/,
-            /^    Allow from all$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title    => 'should accept directory directives hash',
-          :attr     => 'directories',
-          :value    => {
-            'path'              => '/opt/app',
-            'headers'           => 'Set X-Robots-Tag "noindex, noarchive, nosnippet"',
-            'allow'             => 'from rspec.org',
-            'allow_override'    => 'Lol',
-            'deny'              => 'from google.com',
-            'options'           => '-MultiViews',
-            'order'             => 'deny,yned',
-            'passenger_enabled' => 'onf',
-            'sethandler'        => 'None',
-          },
-          :match    => [
-            /^  <Directory "\/opt\/app">$/,
-            /^    Header Set X-Robots-Tag "noindex, noarchive, nosnippet"$/,
-            /^    Allow from rspec.org$/,
-            /^    AllowOverride Lol$/,
-            /^    Deny from google.com$/,
-            /^    Options -MultiViews$/,
-            /^    Order deny,yned$/,
-            /^    SetHandler None$/,
-            /^    PassengerEnabled onf$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title    => 'should accept directory directives with arrays and hashes',
-          :attr     => 'directories',
-          :value    => [
+          'priority'                    => '30',
+          'default_vhost'               => true,
+          'servername'                  => 'example.com',
+          'serveraliases'               => ['test-example.com'],
+          'options'                     => ['MultiView'],
+          'override'                    => ['All'],
+          'directoryindex'              => 'index.html',
+          'vhost_name'                  => 'test',
+          'logroot'                     => '/var/www/logs',
+          'logroot_ensure'              => 'directory',
+          'logroot_mode'                => '0600',
+          'logroot_owner'               => 'root',
+          'logroot_group'               => 'root',
+          'log_level'                   => 'crit',
+          'access_log'                  => false,
+          'access_log_file'             => 'httpd_access_log',
+          'access_log_syslog'           => true,
+          'access_log_format'           => '%h %l %u %t \"%r\" %>s %b',
+          'access_log_env_var'          => '',
+          'aliases'                     => '/image',
+          'directories'                 => [
             {
-              'path'              => '/opt/app1',
-              'allow'             => 'from rspec.org',
-              'allow_override'    => ['AuthConfig','Indexes'],
-              'deny'              => 'from google.com',
-              'options'           => ['-MultiViews','+MultiViews'],
-              'order'             => ['deny','yned'],
-              'passenger_enabled' => 'onf',
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'require'  => [ 'valid-user', 'all denied', ],
             },
             {
-              'path'        => '/opt/app2',
-              'addhandlers' => {
-                'handler'    => 'cgi-script',
-                'extensions' => '.cgi',
+                'path'     => '/var/www/files',
+                'provider' => 'files',
+                'additional_includes'  => [ '/custom/path/includes', '/custom/path/another_includes', ],
+            },
+            {
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'require'  => 'all granted',
+            },
+            {
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'require'  =>
+              {
+                'enforce'  => 'all',
+                'requires' => ['all-valid1', 'all-valid2'],
               },
             },
-          ],
-          :match    => [
-            /^  <Directory "\/opt\/app1">$/,
-            /^    Allow from rspec.org$/,
-            /^    AllowOverride AuthConfig Indexes$/,
-            /^    Deny from google.com$/,
-            /^    Options -MultiViews \+MultiViews$/,
-            /^    Order deny,yned$/,
-            /^    PassengerEnabled onf$/,
-            /^  <\/Directory>$/,
-            /^  <Directory "\/opt\/app2">$/,
-            /^    AllowOverride None$/,
-            /^    Order allow,deny$/,
-            /^    Allow from all$/,
-            /^    AddHandler cgi-script .cgi$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title => 'should accept location for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => '/',
-            'provider' => 'location',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <Location "\/">$/,
-            /^    Order allow,deny$/,
-            /^    Allow from all$/,
-            /^  <\/Location>$/,
-          ],
-        },
-        {
-          :title => 'should accept files for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => 'index.html',
-            'provider' => 'files',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <Files "index.html">$/,
-            /^    Order allow,deny$/,
-            /^    Allow from all$/,
-            /^  <\/Files>$/,
-          ],
-        },
-        {
-          :title => 'should accept files match for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => 'index.html',
-            'provider' => 'filesmatch',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <FilesMatch "index.html">$/,
-            /^    Order allow,deny$/,
-            /^    Allow from all$/,
-            /^  <\/FilesMatch>$/,
-          ],
-        },
-      ].each do |param|
-        describe "when #{param[:attr]} is #{param[:value]}" do
-          let :params do default_params.merge({
-            param[:attr].to_sym => param[:value],
-            :apache_version => '2.2',
-          }) end
-
-          it { should contain_file("25-#{title}.conf").with_mode('0644') }
-          if param[:match]
-            it "#{param[:title]}: matches" do
-              param[:match].each do |match|
-                should contain_file("25-#{title}.conf").with_content( match )
-              end
-            end
-          end
-          if param[:notmatch]
-            it "#{param[:title]}: notmatches" do
-              param[:notmatch].each do |notmatch|
-                should_not contain_file("25-#{title}.conf").with_content( notmatch )
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # Apache equals or above 2.4. All match and notmatch should be a list of regexs and exact match strings
-    context ".conf content with $apache_version >= 2.4" do
-      [
-        {
-          :title    => 'should accept a directory',
-          :attr     => 'directories',
-          :value    => { 'path' => '/opt/app' },
-          :notmatch => ['  <Directory /rspec/docroot>'],
-          :match    => [
-            /^  <Directory "\/opt\/app">$/,
-            /^    AllowOverride None$/,
-            /^    Require all granted$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title    => 'should accept directory directives hash',
-          :attr     => 'directories',
-          :value    => {
-            'path'              => '/opt/app',
-            'headers'           => 'Set X-Robots-Tag "noindex, noarchive, nosnippet"',
-            'allow_override'    => 'Lol',
-            'options'           => '-MultiViews',
-            'require'           => 'something denied',
-            'passenger_enabled' => 'onf',
-          },
-          :match    => [
-            /^  <Directory "\/opt\/app">$/,
-            /^    Header Set X-Robots-Tag "noindex, noarchive, nosnippet"$/,
-            /^    AllowOverride Lol$/,
-            /^    Options -MultiViews$/,
-            /^    Require something denied$/,
-            /^    PassengerEnabled onf$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title    => 'should accept directory directives with arrays and hashes',
-          :attr     => 'directories',
-          :value    => [
             {
-              'path'              => '/opt/app1',
-              'allow_override'    => ['AuthConfig','Indexes'],
-              'options'           => ['-MultiViews','+MultiViews'],
-              'require'           => ['host','example.org'],
-              'passenger_enabled' => 'onf',
-            },
-            {
-              'path'        => '/opt/app2',
-              'addhandlers' => {
-                'handler'    => 'cgi-script',
-                'extensions' => '.cgi',
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'require'  =>
+              {
+                'enforce'  => 'none',
+                'requires' => ['none-valid1', 'none-valid2'],
               },
             },
-          ],
-          :match    => [
-            /^  <Directory "\/opt\/app1">$/,
-            /^    AllowOverride AuthConfig Indexes$/,
-            /^    Options -MultiViews \+MultiViews$/,
-            /^    Require host example.org$/,
-            /^    PassengerEnabled onf$/,
-            /^  <\/Directory>$/,
-            /^  <Directory "\/opt\/app2">$/,
-            /^    AllowOverride None$/,
-            /^    Require all granted$/,
-            /^    AddHandler cgi-script .cgi$/,
-            /^  <\/Directory>$/,
-          ],
-        },
-        {
-          :title => 'should accept location for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => '/',
-            'provider' => 'location',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <Location "\/">$/,
-            /^    Require all granted$/,
-            /^  <\/Location>$/,
-          ],
-        },
-        {
-          :title => 'should accept files for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => 'index.html',
-            'provider' => 'files',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <Files "index.html">$/,
-            /^    Require all granted$/,
-            /^  <\/Files>$/,
-          ],
-        },
-        {
-          :title => 'should accept files match for provider',
-          :attr  => 'directories',
-          :value => {
-            'path'     => 'index.html',
-            'provider' => 'filesmatch',
-          },
-          :notmatch => ['    AllowOverride None'],
-          :match => [
-            /^  <FilesMatch "index.html">$/,
-            /^    Require all granted$/,
-            /^  <\/FilesMatch>$/,
-          ],
-        },
-      ].each do |param|
-        describe "when #{param[:attr]} is #{param[:value]}" do
-          let :params do default_params.merge({
-            param[:attr].to_sym => param[:value],
-            :apache_version => '2.4',
-          }) end
-
-          it { should contain_file("25-#{title}.conf").with_mode('0644') }
-          if param[:match]
-            it "#{param[:title]}: matches" do
-              param[:match].each do |match|
-                should contain_file("25-#{title}.conf").with_content( match )
-              end
-            end
-          end
-          if param[:notmatch]
-            it "#{param[:title]}: notmatches" do
-              param[:notmatch].each do |notmatch|
-                should_not contain_file("25-#{title}.conf").with_content( notmatch )
-              end
-            end
-          end
-        end
-      end
-    end
-
-    # All match and notmatch should be a list of regexs and exact match strings
-    context ".conf content with SSL" do
-      [
-        {
-            :title => 'should accept setting SSLCertificateFile',
-            :attr  => 'ssl_cert',
-            :value => '/path/to/cert.pem',
-            :match => [/^  SSLCertificateFile      "\/path\/to\/cert\.pem"$/],
-        },
-        {
-            :title => 'should accept setting SSLCertificateKeyFile',
-            :attr  => 'ssl_key',
-            :value => '/path/to/cert.pem',
-            :match => [/^  SSLCertificateKeyFile   "\/path\/to\/cert\.pem"$/],
-        },
-        {
-            :title => 'should accept setting SSLCertificateChainFile',
-            :attr  => 'ssl_chain',
-            :value => '/path/to/cert.pem',
-            :match => [/^  SSLCertificateChainFile "\/path\/to\/cert\.pem"$/],
-        },
-        {
-            :title => 'should accept setting SSLCertificatePath',
-            :attr  => 'ssl_certs_dir',
-            :value => '/path/to/certs',
-            :match => [/^  SSLCACertificatePath    "\/path\/to\/certs"$/],
-        },
-        {
-            :title => 'should accept setting SSLCertificateFile',
-            :attr  => 'ssl_ca',
-            :value => '/path/to/ca.pem',
-            :match => [/^  SSLCACertificateFile    "\/path\/to\/ca\.pem"$/],
-        },
-        {
-            :title => 'should accept setting SSLRevocationPath',
-            :attr  => 'ssl_crl_path',
-            :value => '/path/to/crl',
-            :match => [/^  SSLCARevocationPath     "\/path\/to\/crl"$/],
-        },
-        {
-            :title => 'should accept setting SSLRevocationFile',
-            :attr  => 'ssl_crl',
-            :value => '/path/to/crl.pem',
-            :match => [/^  SSLCARevocationFile     "\/path\/to\/crl\.pem"$/],
-        },
-        {
-            :title => 'should accept setting SSLProxyEngine',
-            :attr  => 'ssl_proxyengine',
-            :value => true,
-            :match => [/^  SSLProxyEngine On$/],
-        },
-        {
-            :title => 'should accept setting SSLProtocol',
-            :attr  => 'ssl_protocol',
-            :value => 'all -SSLv2',
-            :match => [/^  SSLProtocol             all -SSLv2$/],
-        },
-        {
-            :title => 'should accept setting SSLCipherSuite',
-            :attr  => 'ssl_cipher',
-            :value => 'RC4-SHA:HIGH:!ADH:!SSLv2',
-            :match => [/^  SSLCipherSuite          RC4-SHA:HIGH:!ADH:!SSLv2$/],
-        },
-        {
-            :title => 'should accept setting SSLHonorCipherOrder',
-            :attr  => 'ssl_honorcipherorder',
-            :value => 'On',
-            :match => [/^  SSLHonorCipherOrder     On$/],
-        },
-        {
-            :title => 'should accept setting SSLVerifyClient',
-            :attr  => 'ssl_verify_client',
-            :value => 'optional',
-            :match => [/^  SSLVerifyClient         optional$/],
-        },
-        {
-            :title => 'should accept setting SSLVerifyDepth',
-            :attr  => 'ssl_verify_depth',
-            :value => '1',
-            :match => [/^  SSLVerifyDepth          1$/],
-        },
-        {
-            :title => 'should accept setting SSLOptions with a string',
-            :attr  => 'ssl_options',
-            :value => '+ExportCertData',
-            :match => [/^  SSLOptions \+ExportCertData$/],
-        },
-        {
-            :title => 'should accept setting SSLOptions with an array',
-            :attr  => 'ssl_options',
-            :value => ['+StrictRequire','+ExportCertData'],
-            :match => [/^  SSLOptions \+StrictRequire \+ExportCertData/],
-        },
-        {
-            :title => 'should accept setting SSLOptions with a string in directories',
-            :attr  => 'directories',
-            :value => { 'path' => '/srv/www', 'ssl_options' => '+ExportCertData'},
-            :match => [/^    SSLOptions \+ExportCertData$/],
-        },
-        {
-            :title => 'should accept setting SSLOptions with an array in directories',
-            :attr  => 'directories',
-            :value => { 'path' => '/srv/www', 'ssl_options' => ['-StdEnvVars','+ExportCertData']},
-            :match => [/^    SSLOptions -StdEnvVars \+ExportCertData/],
-        },
-      ].each do |param|
-        describe "when #{param[:attr]} is #{param[:value]} with SSL" do
-          let :params do
-            default_params.merge( {
-              param[:attr].to_sym => param[:value],
-              :ssl                => true,
-            } )
-          end
-          it { should contain_file("25-#{title}.conf").with_mode('0644') }
-          if param[:match]
-            it "#{param[:title]}: matches" do
-              param[:match].each do |match|
-                should contain_file("25-#{title}.conf").with_content( match )
-              end
-            end
-          end
-          if param[:notmatch]
-            it "#{param[:title]}: notmatches" do
-              param[:notmatch].each do |notmatch|
-                should_not contain_file("25-#{title}.conf").with_content( notmatch )
-              end
-            end
-          end
-        end
-      end
-    end
-
-    context 'attribute resources' do
-      describe 'when access_log_file and access_log_pipe are specified' do
-        let :params do default_params.merge({
-          :access_log_file => 'fake.log',
-          :access_log_pipe => '| /bin/fake',
-        }) end
-        it 'should cause a failure' do
-          expect { subject }.to raise_error(Puppet::Error, /'access_log_file' and 'access_log_pipe' cannot be defined at the same time/)
-        end
-      end
-      describe 'when error_log_file and error_log_pipe are specified' do
-        let :params do default_params.merge({
-          :error_log_file => 'fake.log',
-          :error_log_pipe => '| /bin/fake',
-        }) end
-        it 'should cause a failure' do
-          expect { subject }.to raise_error(Puppet::Error, /'error_log_file' and 'error_log_pipe' cannot be defined at the same time/)
-        end
-      end
-      describe 'when docroot owner and mode is specified' do
-        let :params do default_params.merge({
-          :docroot_owner => 'testuser',
-          :docroot_group => 'testgroup',
-          :docroot_mode  => '0750',
-        }) end
-        it 'should set vhost ownership and permissions' do
-          should contain_file(params[:docroot]).with({
-            :ensure => :directory,
-            :owner  => 'testuser',
-            :group  => 'testgroup',
-            :mode   => '0750',
-          })
-        end
-      end
-
-      describe 'when wsgi_daemon_process and wsgi_daemon_process_options are specified' do
-        let :params do default_params.merge({
-          :wsgi_daemon_process         => 'example.org',
-          :wsgi_daemon_process_options => { 'processes' => '2', 'threads' => '15' },
-        }) end
-        it 'should set wsgi_daemon_process_options' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  WSGIDaemonProcess example.org processes=2 threads=15$/
-          )
-        end
-      end
-
-      describe 'when wsgi_import_script and wsgi_import_script_options are specified' do
-        let :params do default_params.merge({
-          :wsgi_import_script         => '/var/www/demo.wsgi',
-          :wsgi_import_script_options => { 'application-group' => '%{GLOBAL}', 'process-group' => 'wsgi' },
-        }) end
-        it 'should set wsgi_import_script_options' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  WSGIImportScript \/var\/www\/demo.wsgi application-group=%{GLOBAL} process-group=wsgi$/
-          )
-        end
-      end
-
-      describe 'when rewrites are specified' do
-        let :params do default_params.merge({
-          :rewrites => [
             {
-              'comment'      => 'test rewrites',
-              'rewrite_base' => '/mytestpath/',
-              'rewrite_cond' => ['%{HTTP_USER_AGENT} ^Lynx/ [OR]', '%{HTTP_USER_AGENT} ^Mozilla/[12]'],
-              'rewrite_rule' => ['^index\.html$ welcome.html', '^index\.cgi$ index.php'],
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'require'  =>
+              {
+                'enforce'  => 'any',
+                'requires' => ['any-valid1', 'any-valid2'],
+              },
+            },
+            {
+              'path'     => '*',
+              'provider' => 'proxy',
+            },
+            { 'path'              => '/var/www/files/indexed_directory',
+              'directoryindex'    => 'disabled',
+              'options'           => ['Indexes','FollowSymLinks','MultiViews'],
+              'index_options'     => ['FancyIndexing'],
+              'index_style_sheet' => '/styles/style.css',
+            },
+            { 'path'              => '/var/www/files/output_filtered',
+              'set_output_filter' => 'output_filter',
+            },
+            { 'path'     => '/var/www/files',
+              'provider' => 'location',
+              'limit'    => [
+                { 'methods' => 'GET HEAD',
+                  'require' => ['valid-user']
+                },
+              ],
+            },
+            { 'path'               => '/var/www/dav',
+              'dav'                => 'filesystem',
+              'dav_depth_infinity' => true,
+              'dav_min_timeout'    => '600',
+            },
+          ],
+          'error_log'                   => false,
+          'error_log_file'              => 'httpd_error_log',
+          'error_log_syslog'            => true,
+          'error_documents'             => 'true',
+          'fallbackresource'            => '/index.php',
+          'scriptalias'                 => '/usr/lib/cgi-bin',
+          'scriptaliases'               => [
+            {
+              'alias' => '/myscript',
+              'path'  => '/usr/share/myscript',
+            },
+            {
+              'aliasmatch' => '^/foo(.*)',
+              'path'       => '/usr/share/fooscripts$1',
+            },
+          ],
+          'proxy_dest'                  => '/',
+          'proxy_pass'                  => [
+            {
+              'path'            => '/a',
+              'url'             => 'http://backend-a/',
+              'keywords'        => ['noquery', 'interpolate'],
+              'reverse_cookies' => [
+								{
+                  'path'          => '/a',
+                  'url'           => 'http://backend-a/',
+                },
+                {
+                  'domain' => 'foo',
+                  'url'    => 'http://foo',
+                }
+              ],
+              'params'          => {
+                      'retry'   => '0',
+                      'timeout' => '5'
+              },
+              'setenv'   => ['proxy-nokeepalive 1','force-proxy-request-1.0 1'],
             }
+          ],
+          'proxy_pass_match'            => [
+            {
+              'path'     => '/a',
+              'url'      => 'http://backend-a/',
+              'keywords' => ['noquery', 'interpolate'],
+              'params'   => {
+                      'retry'   => '0',
+                      'timeout' => '5'
+              },
+              'setenv'   => ['proxy-nokeepalive 1','force-proxy-request-1.0 1'],
+            }
+          ],
+          'suphp_addhandler'            => 'foo',
+          'suphp_engine'                => 'on',
+          'suphp_configpath'            => '/var/www/html',
+          'php_admin_flags'             => ['foo', 'bar'],
+          'php_admin_values'            => ['true', 'false'],
+          'no_proxy_uris'               => '/foo',
+          'no_proxy_uris_match'         => '/foomatch',
+          'proxy_preserve_host'         => true,
+          'proxy_add_headers'           => true,
+          'proxy_error_override'        => true,
+          'redirect_source'             => '/bar',
+          'redirect_dest'               => '/',
+          'redirect_status'             => 'temp',
+          'redirectmatch_status'        => ['404'],
+          'redirectmatch_regexp'        => ['\.git$'],
+          'redirectmatch_dest'          => ['http://www.example.com'],
+          'rack_base_uris'              => ['/rackapp1'],
+          'passenger_base_uris'         => ['/passengerapp1'],
+          'headers'                     => 'Set X-Robots-Tag "noindex, noarchive, nosnippet"',
+          'request_headers'             => ['append MirrorID "mirror 12"'],
+          'rewrites'                    => [
+            {
+              'rewrite_rule' => ['^index\.html$ welcome.html']
+            }
+          ],
+          'filters'                     => [
+            'FilterDeclare COMPRESS',
+            'FilterProvider COMPRESS  DEFLATE resp=Content-Type $text/html',
+            'FilterProvider COMPRESS  DEFLATE resp=Content-Type $text/css',
+            'FilterProvider COMPRESS  DEFLATE resp=Content-Type $text/plain',
+            'FilterProvider COMPRESS  DEFLATE resp=Content-Type $text/xml',
+            'FilterChain COMPRESS',
+            'FilterProtocol COMPRESS  DEFLATE change=yes;byteranges=no',
+          ],
+          'rewrite_base'                => '/',
+          'rewrite_rule'                => '^index\.html$ welcome.html',
+          'rewrite_cond'                => '%{HTTP_USER_AGENT} ^MSIE',
+          'setenv'                      => ['FOO=/bin/true'],
+          'setenvif'                    => 'Request_URI "\.gif$" object_is_image=gif',
+          'setenvifnocase'              => 'REMOTE_ADDR ^127.0.0.1 localhost=true',
+          'block'                       => 'scm',
+          'wsgi_application_group'      => '%{GLOBAL}',
+          'wsgi_daemon_process'         => 'wsgi',
+          'wsgi_daemon_process_options' => {
+            'processes'    => '2',
+            'threads'      => '15',
+            'display-name' => '%{GROUP}',
+          },
+          'wsgi_import_script'          => '/var/www/demo.wsgi',
+          'wsgi_import_script_options'  => {
+            'process-group'     => 'wsgi',
+            'application-group' => '%{GLOBAL}'
+          },
+          'wsgi_process_group'          => 'wsgi',
+          'wsgi_script_aliases'         => {
+            '/' => '/var/www/demo.wsgi'
+          },
+          'wsgi_pass_authorization'     => 'On',
+          'custom_fragment'             => '#custom string',
+          'itk'                         => {
+            'user'  => 'someuser',
+            'group' => 'somegroup'
+          },
+          'wsgi_chunked_request'        => 'On',
+          'action'                      => 'foo',
+          'fastcgi_server'              => 'localhost',
+          'fastcgi_socket'              => '/tmp/fastcgi.socket',
+          'fastcgi_dir'                 => '/tmp',
+          'fastcgi_idle_timeout'        => '120',
+          'additional_includes'         => '/custom/path/includes',
+          'apache_version'              => '2.4',
+          'use_optional_includes'       => true,
+          'suexec_user_group'           => 'root root',
+          'allow_encoded_slashes'       => 'nodecode',
+          'passenger_app_root'          => '/usr/share/myapp',
+          'passenger_app_env'           => 'test',
+          'passenger_ruby'              => '/usr/bin/ruby1.9.1',
+          'passenger_min_instances'     => '1',
+          'passenger_start_timeout'     => '600',
+          'passenger_pre_start'         => 'http://localhost/myapp',
+          'passenger_high_performance'  => true,
+          'passenger_user'              => 'sandbox',
+          'add_default_charset'         => 'UTF-8',
+          'jk_mounts'                   => [
+            { 'mount'   => '/*',     'worker' => 'tcnode1', },
+            { 'unmount' => '/*.jpg', 'worker' => 'tcnode1', },
+          ],
+          'auth_kerb'                   => true,
+          'krb_method_negotiate'        => 'off',
+          'krb_method_k5passwd'         => 'off',
+          'krb_authoritative'           => 'off',
+          'krb_auth_realms'             => ['EXAMPLE.ORG','EXAMPLE.NET'],
+          'krb_5keytab'                 => '/tmp/keytab5',
+          'krb_local_user_mapping'      => 'off',
+          'keepalive'                   => 'on',
+          'keepalive_timeout'           => '100',
+          'max_keepalive_requests'      => '1000',
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.6.2',
+          :is_pe                  => false,
+        }
+      end
+
+      it { is_expected.to compile }
+      it { is_expected.to_not contain_file('/var/www/foo') }
+      it { is_expected.to contain_class('apache::mod::ssl') }
+      it { is_expected.to contain_file('ssl.conf').with(
+        :content => /^\s+SSLHonorCipherOrder On$/ ) }
+      it { is_expected.to contain_file('ssl.conf').with(
+        :content => /^\s+SSLPassPhraseDialog builtin$/ ) }
+      it { is_expected.to contain_file('ssl.conf').with(
+        :content => /^\s+SSLSessionCacheTimeout 300$/ ) }
+      it { is_expected.to contain_class('apache::mod::mime') }
+      it { is_expected.to contain_class('apache::mod::vhost_alias') }
+      it { is_expected.to contain_class('apache::mod::wsgi') }
+      it { is_expected.to contain_class('apache::mod::suexec') }
+      it { is_expected.to contain_class('apache::mod::passenger') }
+      it { is_expected.to contain_file('/var/www/logs').with({
+        'ensure' => 'directory',
+        'mode'   => '0600',
+      })
+      }
+      it { is_expected.to contain_class('apache::mod::rewrite') }
+      it { is_expected.to contain_class('apache::mod::alias') }
+      it { is_expected.to contain_class('apache::mod::proxy') }
+      it { is_expected.to contain_class('apache::mod::proxy_http') }
+      it { is_expected.to contain_class('apache::mod::passenger') }
+      it { is_expected.to contain_class('apache::mod::passenger') }
+      it { is_expected.to contain_class('apache::mod::fastcgi') }
+      it { is_expected.to contain_class('apache::mod::headers') }
+      it { is_expected.to contain_class('apache::mod::filter') }
+      it { is_expected.to contain_class('apache::mod::setenvif') }
+      it { is_expected.to contain_concat('30-rspec.example.com.conf').with({
+        'owner'   => 'root',
+        'mode'    => '0644',
+        'require' => 'Package[httpd]',
+        'notify'  => 'Class[Apache::Service]',
+      })
+      }
+      it { is_expected.to contain_file('30-rspec.example.com.conf symlink').with({
+        'ensure' => 'link',
+        'path'   => '/etc/apache2/sites-enabled/30-rspec.example.com.conf',
+      })
+      }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-docroot') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-aliases') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-itk') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-fallbackresource') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<Proxy "\*">$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Include\s'\/custom\/path\/includes'$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+          :content => /^\s+Include\s'\/custom\/path\/another_includes'$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require valid-user$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all denied$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all granted$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<RequireAll>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<\/RequireAll>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all-valid1$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all-valid2$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<RequireNone>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<\/RequireNone>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require none-valid1$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require none-valid2$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<RequireAny>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<\/RequireAny>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require any-valid1$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require any-valid2$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Options\sIndexes\sFollowSymLinks\sMultiViews$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+IndexOptions\sFancyIndexing$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+IndexStyleSheet\s'\/styles\/style\.css'$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+DirectoryIndex\sdisabled$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+SetOutputFilter\soutput_filter$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+<Limit GET HEAD>$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /\s+<Limit GET HEAD>\s*Require valid-user\s*<\/Limit>/m ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Dav\sfilesystem$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+DavDepthInfinity\sOn$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+DavMinTimeout\s600$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-additional_includes') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-logging') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-serversignature') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-access_log') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-action') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-block') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-error_document') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /retry=0/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /timeout=5/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /SetEnv force-proxy-request-1.0 1/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /SetEnv proxy-nokeepalive 1/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /noquery interpolate/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /ProxyPreserveHost On/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /ProxyAddHeaders On/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /ProxyPassReverseCookiePath\s+\/a\s+http:\/\//) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /ProxyPassReverseCookieDomain\s+foo\s+http:\/\/foo/) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-rack') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-redirect') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-rewrite') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-scriptalias') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-serveralias') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-setenv').with_content(
+              %r{SetEnv FOO=/bin/true}) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-setenv').with_content(
+              %r{SetEnvIf Request_URI "\\.gif\$" object_is_image=gif}) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-setenv').with_content(
+              %r{SetEnvIfNoCase REMOTE_ADDR \^127.0.0.1 localhost=true}) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-ssl') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-ssl').with(
+        :content => /^\s+SSLOpenSSLConfCmd\s+DHParameters "foo.pem"$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy').with(
+        :content => /^\s+SSLProxyEngine On$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy').with(
+        :content => /^\s+SSLProxyCheckPeerCN\s+on$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy').with(
+        :content => /^\s+SSLProxyCheckPeerName\s+on$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy').with(
+        :content => /^\s+SSLProxyCheckPeerExpire\s+on$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy').with(
+        :content => /^\s+SSLProxyProtocol\s+TLSv1.2$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-suphp') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-php_admin') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-header') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-filters').with(
+        :content => /^\s+FilterDeclare COMPRESS$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-requestheader') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-wsgi') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-custom_fragment') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-fastcgi') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-suexec') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-allow_encoded_slashes') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-passenger') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-charsets') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-file_footer') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-jk_mounts').with(
+        :content => /^\s+JkMount\s+\/\*\s+tcnode1$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-jk_mounts').with(
+        :content => /^\s+JkUnMount\s+\/\*\.jpg\s+tcnode1$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbMethodNegotiate\soff$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbAuthoritative\soff$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbAuthRealms\sEXAMPLE.ORG\sEXAMPLE.NET$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+Krb5Keytab\s\/tmp\/keytab5$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbLocalUserMapping\soff$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbServiceName\sHTTP$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbSaveCredentials\soff$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-auth_kerb').with(
+        :content => /^\s+KrbVerifyKDC\son$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-keepalive_options').with(
+        :content => /^\s+KeepAlive\son$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-keepalive_options').with(
+        :content => /^\s+KeepAliveTimeout\s100$/)}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-keepalive_options').with(
+        :content => /^\s+MaxKeepAliveRequests\s1000$/)}
+    end
+    context 'vhost with multiple ip addresses' do
+      let :params do
+        {
+          'port'                        => '80',
+          'ip'                          => ['127.0.0.1','::1'],
+          'ip_based'                    => true,
+          'servername'                  => 'example.com',
+          'docroot'                     => '/var/www/html',
+          'add_listen'                  => true,
+          'ensure'                      => 'present'
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.6.2',
+          :is_pe                  => false,
+        }
+      end
+
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header').with(
+        :content => /[.\/m]*<VirtualHost 127.0.0.1:80 \[::1\]:80>[.\/m]*$/ ) }
+      it { is_expected.to contain_concat__fragment('Listen 127.0.0.1:80') }
+      it { is_expected.to contain_concat__fragment('Listen [::1]:80') }
+      it { is_expected.to_not contain_concat__fragment('NameVirtualHost 127.0.0.1:80') }
+      it { is_expected.to_not contain_concat__fragment('NameVirtualHost [::1]:80') }
+    end
+
+    context 'vhost with ipv6 address' do
+      let :params do
+        {
+          'port'                        => '80',
+          'ip'                          => '::1',
+          'ip_based'                    => true,
+          'servername'                  => 'example.com',
+          'docroot'                     => '/var/www/html',
+          'add_listen'                  => true,
+          'ensure'                      => 'present'
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.6.2',
+          :is_pe                  => false,
+        }
+      end
+
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header').with(
+        :content => /[.\/m]*<VirtualHost \[::1\]:80>[.\/m]*$/ ) }
+      it { is_expected.to contain_concat__fragment('Listen [::1]:80') }
+      it { is_expected.to_not contain_concat__fragment('NameVirtualHost [::1]:80') }
+    end
+
+    context 'vhost with wildcard ip address' do
+      let :params do
+        {
+          'port'                        => '80',
+          'ip'                          => '*',
+          'ip_based'                    => true,
+          'servername'                  => 'example.com',
+          'docroot'                     => '/var/www/html',
+          'add_listen'                  => true,
+          'ensure'                      => 'present'
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.6.2',
+          :is_pe                  => false,
+        }
+      end
+
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header').with(
+        :content => /[.\/m]*<VirtualHost \*:80>[.\/m]*$/ ) }
+      it { is_expected.to contain_concat__fragment('Listen *:80') }
+      it { is_expected.to_not contain_concat__fragment('NameVirtualHost *:80') }
+    end
+
+    context 'set only aliases' do
+      let :params do
+        {
+          'docroot' => '/rspec/docroot',
+          'aliases' => [
+            {
+              'alias' => '/alias',
+              'path'  => '/rspec/docroot',
+            },
           ]
-        }) end
-        it 'should set RewriteConds and RewriteRules' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  #test rewrites$/
-          )
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteCond %\{HTTP_USER_AGENT\} \^Lynx\/ \[OR\]$/
-          )
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteBase \/mytestpath\/$/
-          )
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteCond %\{HTTP_USER_AGENT\} \^Mozilla\/\[12\]$/
-          )
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteRule \^index\\.html\$ welcome.html$/
-          )
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteRule \^index\\.cgi\$ index.php$/
-          )
-        end
+        }
       end
-
-      describe 'when rewrite_rule and rewrite_cond are specified' do
-        let :params do default_params.merge({
-          :rewrite_cond => '%{HTTPS} off',
-          :rewrite_rule => '(.*) https://%{HTTPS_HOST}%{REQUEST_URI}',
-        }) end
-        it 'should set RewriteCond' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  RewriteCond %\{HTTPS\} off$/
-          )
-        end
-      end
-
-      describe 'when action is specified specified' do
-        let :params do default_params.merge({
-          :action => 'php-fastcgi',
-        }) end
-        it 'should set Action' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  Action php-fastcgi \/cgi-bin virtual$/
-          )
-        end
-      end
-
-      describe 'when suphp_engine is on and suphp_configpath is specified' do
-        let :params do default_params.merge({
-          :suphp_engine     => 'on',
-          :suphp_configpath => '/etc/php5/apache2',
-        }) end
-        it 'should set suphp_configpath' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  suPHP_ConfigPath "\/etc\/php5\/apache2"$/
-          )
-        end
-      end
-
-      describe 'when suphp_engine is on and suphp_addhandler is specified' do
-        let :params do default_params.merge({
-          :suphp_engine     => 'on',
-          :suphp_addhandler => 'x-httpd-php',
-        }) end
-        it 'should set suphp_addhandler' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^  suPHP_AddHandler x-httpd-php/
-          )
-        end
-      end
-
-      describe 'when suphp_engine is on and suphp { user & group } is specified' do
-        let :params do default_params.merge({
-          :suphp_engine     => 'on',
-          :directories      => { 'path' => '/srv/www',
-            'suphp' => { 'user' => 'myappuser', 'group' => 'myappgroup' },
-          }
-        }) end
-        it 'should set suphp_UserGroup' do
-          should contain_file("25-#{title}.conf").with_content(
-            /^    suPHP_UserGroup myappuser myappgroup/
-          )
-        end
-      end
-
-      describe 'priority/default settings' do
-        describe 'when neither priority/default is specified' do
-          let :params do default_params end
-          it { should contain_file("25-#{title}.conf").with_path(
-            /25-#{title}.conf/
-          ) }
-        end
-        describe 'when both priority/default_vhost is specified' do
-          let :params do
-            default_params.merge({
-              :priority      => 15,
-              :default_vhost => true,
-            })
-          end
-          it { should contain_file("15-#{title}.conf").with_path(
-            /15-#{title}.conf/
-          ) }
-        end
-        describe 'when only priority is specified' do
-          let :params do
-            default_params.merge({ :priority => 14, })
-          end
-          it { should contain_file("14-#{title}.conf").with_path(
-            /14-#{title}.conf/
-          ) }
-        end
-        describe 'when only default is specified' do
-          let :params do
-            default_params.merge({ :default_vhost => true, })
-          end
-          it { should contain_file("10-#{title}.conf").with_path(
-            /10-#{title}.conf/
-          ) }
-        end
-      end
-
-      describe 'various ip/port combos' do
-        describe 'when ip_based is true' do
-          let :params do default_params.merge({ :ip_based => true }) end
-          it 'should not specify a NameVirtualHost' do
-            should contain_apache__listen(params[:port])
-            should_not contain_apache__namevirtualhost("*:#{params[:port]}")
-          end
-        end
-
-        describe 'when ip_based is default' do
-          let :params do default_params end
-          it 'should specify a NameVirtualHost' do
-            should contain_apache__listen(params[:port])
-            should contain_apache__namevirtualhost("*:#{params[:port]}")
-          end
-        end
-
-        describe 'when an ip is set' do
-          let :params do default_params.merge({ :ip => '10.0.0.1' }) end
-          it 'should specify a NameVirtualHost for the ip' do
-            should_not contain_apache__listen(params[:port])
-            should contain_apache__listen("10.0.0.1:#{params[:port]}")
-            should contain_apache__namevirtualhost("10.0.0.1:#{params[:port]}")
-          end
-        end
-
-        describe 'an ip_based vhost without a port' do
-          let :params do
+      it { is_expected.to contain_class('apache::mod::alias')}
+    end
+    context 'proxy_pass_match' do
+      let :params do
+        {
+          'docroot'          => '/rspec/docroot',
+          'proxy_pass_match'            => [
             {
-              :docroot  => '/fake',
-              :ip       => '10.0.0.1',
-              :ip_based => true,
+              'path'     => '.*',
+              'url'      => 'http://backend-a/',
+              'params'   => { 'timeout' => 300 },
             }
-          end
-          it 'should specify a NameVirtualHost for the ip' do
-            should_not contain_apache__listen(params[:ip])
-            should_not contain_apache__namevirtualhost(params[:ip])
-            should contain_file("25-#{title}.conf").with_content %r{<VirtualHost 10\.0\.0\.1>}
-          end
-        end
+          ],
+        }
+      end
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(
+              /ProxyPassMatch .* http:\/\/backend-a\/ timeout=300/).with_content(/## Proxy rules/) }
+    end
+    context 'proxy_dest_match' do
+      let :params do
+        {
+          'docroot'          => '/rspec/docroot',
+          'proxy_dest_match' => '/'
+        }
+      end
+      it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(/## Proxy rules/) }
+    end
+    context 'not everything can be set together...' do
+      let :params do
+        {
+          'access_log_pipe' => '/dev/null',
+          'error_log_pipe'  => '/dev/null',
+          'docroot'         => '/var/www/foo',
+          'ensure'          => 'absent',
+          'manage_docroot'  => true,
+          'logroot'         => '/tmp/logroot',
+          'logroot_ensure'  => 'absent',
+          'directories'     => [
+            {
+              'path'     => '/var/www/files',
+              'provider' => 'files',
+              'allow'    => [ 'from 127.0.0.1', 'from 127.0.0.2', ],
+              'deny'     => [ 'from 127.0.0.3', 'from 127.0.0.4', ],
+              'satisfy'  => 'any',
+            },
+            {
+              'path'     => '/var/www/foo',
+              'provider' => 'files',
+              'allow'    => 'from 127.0.0.5',
+              'deny'     => 'from all',
+              'order'    => 'deny,allow',
+            },
+          ],
+
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '6',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.6.2',
+          :is_pe                  => false,
+        }
       end
 
-      describe 'when suexec_user_group is specified' do
-        let :params do
-          default_params.merge({
-            :suexec_user_group => 'nobody nogroup',
-          })
-        end
+      it { is_expected.to compile }
+      it { is_expected.to_not contain_class('apache::mod::ssl') }
+      it { is_expected.to_not contain_class('apache::mod::mime') }
+      it { is_expected.to_not contain_class('apache::mod::vhost_alias') }
+      it { is_expected.to_not contain_class('apache::mod::wsgi') }
+      it { is_expected.to_not contain_class('apache::mod::passenger') }
+      it { is_expected.to_not contain_class('apache::mod::suexec') }
+      it { is_expected.to_not contain_class('apache::mod::rewrite') }
+      it { is_expected.to_not contain_class('apache::mod::alias') }
+      it { is_expected.to_not contain_class('apache::mod::proxy') }
+      it { is_expected.to_not contain_class('apache::mod::proxy_http') }
+      it { is_expected.to_not contain_class('apache::mod::passenger') }
+      it { is_expected.to_not contain_class('apache::mod::headers') }
+      it { is_expected.to contain_file('/var/www/foo') }
+      it { is_expected.to contain_file('/tmp/logroot').with({
+        'ensure' => 'absent',
+      })
+      }
+      it { is_expected.to contain_concat('25-rspec.example.com.conf').with({
+        'ensure' => 'absent',
+      })
+      }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-docroot') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-aliases') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-itk') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-fallbackresource') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Allow from 127\.0\.0\.1$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Allow from 127\.0\.0\.2$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Allow from 127\.0\.0\.5$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Deny from 127\.0\.0\.3$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Deny from 127\.0\.0\.4$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Deny from all$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Satisfy any$/ ) }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Order deny,allow$/ ) }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-additional_includes') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-logging') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-serversignature') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-action') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-block') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-error_document') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-proxy') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-rack') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-redirect') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-rewrite') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-scriptalias') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-serveralias') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-setenv') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-ssl') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-sslproxy') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-suphp') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-php_admin') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-header') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-requestheader') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-wsgi') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-custom_fragment') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-fastcgi') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-suexec') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-charsets') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-limits') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-file_footer') }
+    end
+    context 'when not setting nor managing the docroot' do
+      let :params do
+        {
+          'docroot'                     => false,
+          'manage_docroot'              => false,
+        }
+      end
+      it { is_expected.to compile }
+      it { is_expected.not_to contain_concat__fragment('rspec.example.com-docroot') }
+    end
+    context 'ssl_proxyengine without ssl' do
+      let :params do
+        {
+          'docroot'         => '/rspec/docroot',
+          'ssl'             => false,
+          'ssl_proxyengine' => true,
+        }
+      end
+      it { is_expected.to compile }
+      it { is_expected.not_to contain_concat__fragment('rspec.example.com-ssl') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-sslproxy') }
+    end
+    context 'ssl_proxy_protocol without ssl_proxyengine' do
+      let :params do
+        {
+          'docroot'            => '/rspec/docroot',
+          'ssl'                => true,
+          'ssl_proxyengine'    => false,
+          'ssl_proxy_protocol' => 'TLSv1.2',
+        }
+      end
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-ssl') }
+      it { is_expected.not_to contain_concat__fragment('rspec.example.com-sslproxy') }
+    end
+  end
+  describe 'access logs' do
+    let :facts do
+      {
+        :osfamily               => 'RedHat',
+        :operatingsystemrelease => '6',
+        :concat_basedir         => '/dne',
+        :operatingsystem        => 'RedHat',
+        :id                     => 'root',
+        :kernel                 => 'Linux',
+        :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        :is_pe                  => false,
+      }
+    end
+    context 'single log file' do
+      let(:params) do
+        {
+          'docroot'         => '/rspec/docroot',
+          'access_log_file' => 'my_log_file',
+        }
+      end
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log').with(
+        :content => /^\s+CustomLog.*my_log_file" combined\s*$/
+      )}
+    end
+    context 'single log file with environment' do
+      let(:params) do
+        {
+          'docroot'            => '/rspec/docroot',
+          'access_log_file'    => 'my_log_file',
+          'access_log_env_var' => 'prod'
+        }
+      end
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log').with(
+        :content => /^\s+CustomLog.*my_log_file" combined\s+env=prod$/
+      )}
+    end
+    context 'multiple log files' do
+      let(:params) do
+        {
+          'docroot'     => '/rspec/docroot',
+          'access_logs' => [
+            { 'file' => '/tmp/log1', 'env' => 'dev' },
+            { 'file' => 'log2' },
+            { 'syslog' => 'syslog', 'format' => '%h %l' }
+          ],
+        }
+      end
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log').with(
+        :content => /^\s+CustomLog "\/tmp\/log1"\s+combined\s+env=dev$/
+      )}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log').with(
+        :content => /^\s+CustomLog "\/var\/log\/httpd\/log2"\s+combined\s*$/
+      )}
+      it { is_expected.to contain_concat__fragment('rspec.example.com-access_log').with(
+        :content => /^\s+CustomLog "syslog" "%h %l"\s*$/
+      )}
+    end
+  end # access logs
+  describe 'validation' do
+    let :default_facts do
+      {
+        :osfamily               => 'RedHat',
+        :operatingsystemrelease => '6',
+        :concat_basedir         => '/dne',
+        :operatingsystem        => 'RedHat',
+        :id                     => 'root',
+        :kernel                 => 'Linux',
+        :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        :is_pe                  => false,
+      }
+    end
+    context 'bad ensure' do
+      let :params do
+        {
+          'docroot' => '/rspec/docroot',
+          'ensure'  => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad suphp_engine' do
+      let :params do
+        {
+          'docroot'      => '/rspec/docroot',
+          'suphp_engine' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad ip_based' do
+      let :params do
+        {
+          'docroot'  => '/rspec/docroot',
+          'ip_based' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad access_log' do
+      let :params do
+        {
+          'docroot'    => '/rspec/docroot',
+          'access_log' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad error_log' do
+      let :params do
+        {
+          'docroot'   => '/rspec/docroot',
+          'error_log' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad_ssl' do
+      let :params do
+        {
+          'docroot' => '/rspec/docroot',
+          'ssl'     => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad default_vhost' do
+      let :params do
+        {
+          'docroot'       => '/rspec/docroot',
+          'default_vhost' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad ssl_proxyengine' do
+      let :params do
+        {
+          'docroot'         => '/rspec/docroot',
+          'ssl_proxyengine' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad rewrites' do
+      let :params do
+        {
+          'docroot'  => '/rspec/docroot',
+          'rewrites' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad rewrites 2' do
+      let :params do
+        {
+          'docroot'  => '/rspec/docroot',
+          'rewrites' => ['bogus'],
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'empty rewrites' do
+      let :params do
+        {
+          'docroot'  => '/rspec/docroot',
+          'rewrites' => [],
+        }
+      end
+      let :facts do default_facts end
+      it { is_expected.to compile }
+    end
+    context 'bad suexec_user_group' do
+      let :params do
+        {
+          'docroot'           => '/rspec/docroot',
+          'suexec_user_group' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad wsgi_script_alias' do
+      let :params do
+        {
+          'docroot'           => '/rspec/docroot',
+          'wsgi_script_alias' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad wsgi_daemon_process_options' do
+      let :params do
+        {
+          'docroot'                     => '/rspec/docroot',
+          'wsgi_daemon_process_options' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad wsgi_import_script_alias' do
+      let :params do
+        {
+          'docroot'                  => '/rspec/docroot',
+          'wsgi_import_script_alias' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad itk' do
+      let :params do
+        {
+          'docroot' => '/rspec/docroot',
+          'itk'     => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad logroot_ensure' do
+      let :params do
+        {
+          'docroot'   => '/rspec/docroot',
+          'log_level' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad log_level' do
+      let :params do
+        {
+          'docroot'   => '/rspec/docroot',
+          'log_level' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'access_log_file and access_log_pipe' do
+      let :params do
+        {
+          'docroot'         => '/rspec/docroot',
+          'access_log_file' => 'bogus',
+          'access_log_pipe' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'error_log_file and error_log_pipe' do
+      let :params do
+        {
+          'docroot'        => '/rspec/docroot',
+          'error_log_file' => 'bogus',
+          'error_log_pipe' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad fallbackresource' do
+      let :params do
+        {
+          'docroot'          => '/rspec/docroot',
+          'fallbackresource' => 'bogus',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad custom_fragment' do
+      let :params do
+        {
+          'docroot'         => '/rspec/docroot',
+          'custom_fragment' => true,
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'bad access_logs' do
+      let :params do
+        {
+          'docroot'     => '/rspec/docroot',
+          'access_logs' => '/var/log/somewhere',
+        }
+      end
+      let :facts do default_facts end
+      it { expect { is_expected.to compile }.to raise_error }
+    end
+    context 'default of require all granted' do
+      let :params do
+        {
+          'docroot'         => '/var/www/foo',
+          'directories'     => [
+            {
+              'path'     => '/var/www/foo/files',
+              'provider' => 'files',
+            },
+          ],
 
-        it { should contain_file("25-#{title}.conf").with_content %r{^  SuexecUserGroup nobody nogroup$} }
+        }
+      end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.19.2',
+          :is_pe                  => false,
+        }
       end
 
-      describe 'redirect rules' do
-        describe 'without lockstep arrays' do
-          let :params do
-            default_params.merge({
-              :redirect_source => [
-                '/login',
-                '/logout',
-              ],
-              :redirect_dest   => [
-                'http://10.0.0.10/login',
-                'http://10.0.0.10/logout',
-              ],
-              :redirect_status   => [
-                'permanent',
-                '',
-              ],
-            })
-          end
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat('25-rspec.example.com.conf') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all granted$/ ) }
+    end
+    context 'require unmanaged' do
+      let :params do
+        {
+          'docroot'         => '/var/www/foo',
+          'directories'     => [
+            {
+              'path'     => '/var/www/foo',
+              'require'  => 'unmanaged',
+            },
+          ],
 
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect permanent /login http://10\.0\.0\.10/login} }
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect  /logout http://10\.0\.0\.10/logout} }
-        end
-        describe 'redirect match rules' do
-          let :params do
-            default_params.merge({
-              :redirectmatch_status => [
-                '404',
-              ],
-              :redirectmatch_regexp   => [
-                '/\.git(/.*|$)',
-              ],
-            })
-          end
-
-          it { should contain_file("25-#{title}.conf").with_content %r{  RedirectMatch 404 } }
-        end
-        describe 'without a status' do
-          let :params do
-            default_params.merge({
-              :redirect_source => [
-                '/login',
-                '/logout',
-              ],
-              :redirect_dest   => [
-                'http://10.0.0.10/login',
-                'http://10.0.0.10/logout',
-              ],
-            })
-          end
-
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect  /login http://10\.0\.0\.10/login} }
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect  /logout http://10\.0\.0\.10/logout} }
-        end
-        describe 'with a single status and dest' do
-          let :params do
-            default_params.merge({
-              :redirect_source => [
-                '/login',
-                '/logout',
-              ],
-              :redirect_dest   => 'http://10.0.0.10/test',
-              :redirect_status => 'permanent',
-            })
-          end
-
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect permanent /login http://10\.0\.0\.10/test} }
-          it { should contain_file("25-#{title}.conf").with_content %r{  Redirect permanent /logout http://10\.0\.0\.10/test} }
-        end
-
-        describe 'with a directoryindex specified' do
-          let :params do
-            default_params.merge({
-              :directoryindex => 'index.php'
-            })
-          end
-          it { should contain_file("25-#{title}.conf").with_content %r{DirectoryIndex index.php} }
-	end
+        }
       end
+      let :facts do
+        {
+          :osfamily               => 'RedHat',
+          :operatingsystemrelease => '7',
+          :concat_basedir         => '/dne',
+          :operatingsystem        => 'RedHat',
+          :id                     => 'root',
+          :kernel                 => 'Linux',
+          :path                   => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :kernelversion          => '3.19.2',
+          :is_pe                  => false,
+        }
+      end
+
+      it { is_expected.to compile }
+      it { is_expected.to contain_concat('25-rspec.example.com.conf') }
+      it { is_expected.to contain_concat__fragment('rspec.example.com-directories') }
+      it { is_expected.to_not contain_concat__fragment('rspec.example.com-directories').with(
+        :content => /^\s+Require all granted$/ )
+      }
     end
   end
 end

@@ -1,9 +1,10 @@
-class puppetlabs_apache::mod::rpaf (
+class apache::mod::rpaf (
   $sethostname = true,
   $proxy_ips   = [ '127.0.0.1' ],
   $header      = 'X-Forwarded-For'
 ) {
-  ::puppetlabs_apache::mod { 'rpaf': }
+  include ::apache
+  ::apache::mod { 'rpaf': }
 
   # Template uses:
   # - $sethostname
@@ -11,10 +12,11 @@ class puppetlabs_apache::mod::rpaf (
   # - $header
   file { 'rpaf.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/rpaf.conf",
-    content => template('puppetlabs_apache/mod/rpaf.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    path    => "${::apache::mod_dir}/rpaf.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/rpaf.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }

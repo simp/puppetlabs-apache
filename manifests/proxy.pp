@@ -1,4 +1,4 @@
-# Class:puppetlabs_apache::proxy
+# Class: apache::proxy
 #
 # This class enabled the proxy module for Apache
 #
@@ -9,7 +9,7 @@
 #
 # Sample Usage:
 #
-class puppetlabs_apache::proxy {
-  warning('apache::proxy is deprecated; please usepuppetlabs_apache::mod::proxy')
-  include ::puppetlabs_apache::mod::proxy
+class apache::proxy {
+  warning('apache::proxy is deprecated; please use apache::mod::proxy')
+  include ::apache::mod::proxy
 }

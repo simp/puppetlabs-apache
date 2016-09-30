@@ -1,4 +1,10 @@
-class puppetlabs_apache::mod::cgi {
-  Class['::puppetlabs_apache::mod::prefork'] -> Class['::puppetlabs_apache::mod::cgi']
-  ::puppetlabs_apache::mod { 'cgi': }
+class apache::mod::cgi {
+  case $::osfamily {
+    'FreeBSD': {}
+    default: {
+      Class['::apache::mod::prefork'] -> Class['::apache::mod::cgi']
+    }
+  }
+
+  ::apache::mod { 'cgi': }
 }

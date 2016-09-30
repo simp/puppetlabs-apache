@@ -1,21 +1,11 @@
 require 'spec_helper_acceptance'
+require_relative './version.rb'
 
-describe 'apache::mod::pagespeed class', :unless => UNSUPPORTED_PLATFORMS.include?(fact('osfamily')) do
-  case fact('osfamily')
-  when 'Debian'
-    vhost_dir    = '/etc/apache2/sites-enabled'
-    mod_dir      = '/etc/apache2/mods-available'
-    service_name = 'apache2'
-  when 'RedHat'
-    vhost_dir    = '/etc/httpd/conf.d'
-    mod_dir      = '/etc/httpd/conf.d'
-    service_name = 'httpd'
-  when 'FreeBSD'
-    vhost_dir    = '/usr/local/etc/apache22/Vhosts'
-    mod_dir      = '/usr/local/etc/apache22/Modules'
-    service_name = 'apache22'
-  end
-
+# Don't run this test on Debian < 8 or Ubuntu < 12, because Debian doesn't like
+# updating packages and Pagespeed doesn't like old packages.
+describe 'apache::mod::pagespeed class', :unless =>
+  ((fact('operatingsystem') == 'Debian' && fact('operatingsystemmajrelease') < '8') or
+   (fact('operatingsystem') == 'Ubuntu' && fact('operatingsystemmajrelease') < '12')) do
   context "default pagespeed config" do
     it 'succeeds in puppeting pagespeed' do
       pp= <<-EOS
@@ -29,15 +19,15 @@ describe 'apache::mod::pagespeed class', :unless => UNSUPPORTED_PLATFORMS.includ
             release     => 'stable',
             repos       => 'main',
             include_src => false,
-            before      => Class['puppetlabs_apache'],
-          } 
+            before      => Class['apache'],
+          }
         } elsif $::osfamily == 'RedHat' {
          yumrepo { 'mod-pagespeed':
-          baseurl  => 'http://dl.google.com/linux/mod-pagespeed/rpm/stable/x86_64',
+          baseurl  => "http://dl.google.com/linux/mod-pagespeed/rpm/stable/$::architecture",
             enabled  => 1,
             gpgcheck => 1,
             gpgkey   => 'https://dl-ssl.google.com/linux/linux_signing_key.pub',
-            before   => Class['puppetlabs_apache'],
+            before   => Class['apache'],
           }
         }
 
@@ -49,7 +39,7 @@ describe 'apache::mod::pagespeed class', :unless => UNSUPPORTED_PLATFORMS.includ
           disable_filters => ['extend_cache'],
           forbid_filters  => ['rewrite_javascript'],
         }
-       puppetlabs_apache::vhost { 'pagespeed.example.com':
+        apache::vhost { 'pagespeed.example.com':
           port    => '80',
           docroot => '/var/www/pagespeed',
         }
@@ -62,23 +52,27 @@ describe 'apache::mod::pagespeed class', :unless => UNSUPPORTED_PLATFORMS.includ
       apply_manifest(pp, :catch_failures => true)
     end
 
-    describe service(service_name) do
-      it { should be_enabled }
-      it { should be_running }
+    describe service($service_name) do
+      if (fact('operatingsystem') == 'Debian' && fact('operatingsystemmajrelease') == '8')
+        pending 'Should be enabled - Bug 760616 on Debian 8'
+      else
+        it { should be_enabled }
+      end
+      it { is_expected.to be_running }
     end
 
-    describe file("#{mod_dir}/pagespeed.conf") do
-      it { should contain "AddOutputFilterByType MOD_PAGESPEED_OUTPUT_FILTER text/html" }
-      it { should contain "ModPagespeedEnableFilters remove_comments" }
-      it { should contain "ModPagespeedDisableFilters extend_cache" }
-      it { should contain "ModPagespeedForbidFilters rewrite_javascript" }
+    describe file("#{$mod_dir}/pagespeed.conf") do
+      it { is_expected.to contain "AddOutputFilterByType MOD_PAGESPEED_OUTPUT_FILTER text/html" }
+      it { is_expected.to contain "ModPagespeedEnableFilters remove_comments" }
+      it { is_expected.to contain "ModPagespeedDisableFilters extend_cache" }
+      it { is_expected.to contain "ModPagespeedForbidFilters rewrite_javascript" }
     end
 
     it 'should answer to pagespeed.example.com and include <head/> and be stripped of comments by mod_pagespeed' do
       shell("/usr/bin/curl pagespeed.example.com:80") do |r|
-        r.stdout.should =~ /<head\/>/
-        r.stdout.should_not =~ /<!-- comment -->/
-        r.exit_code.should == 0
+        expect(r.stdout).to match(/<head\/>/)
+        expect(r.stdout).not_to match(/<!-- comment -->/)
+        expect(r.exit_code).to eq(0)
       end
     end
   end

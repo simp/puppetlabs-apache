@@ -1,9 +1,9 @@
-# == Define Resource Type:puppetlabs_apache::balancer
+# == Define Resource Type: apache::balancer
 #
 # This type will create an apache balancer cluster file inside the conf.d
 # directory. Each balancer cluster needs one or more balancer members (that can
-# be declared with thepuppetlabs_apache::balancermember defined resource type). Using
-# storeconfigs, you can export thepuppetlabs_apache::balancermember resources on all
+# be declared with the apache::balancermember defined resource type). Using
+# storeconfigs, you can export the apache::balancermember resources on all
 # balancer members, and then collect them on a single apache load balancer
 # server.
 #
@@ -23,12 +23,16 @@
 # Hash, default empty. If given, each key-value pair will be used as a ProxySet
 # line in the configuration.
 #
+# [*target*]
+# String, default undef. If given, path to the file the balancer definition will
+# be written.
+#
 # [*collect_exported*]
 # Boolean, default 'true'. True means 'collect exported @@balancermember
 # resources' (for the case when every balancermember node exports itself),
 # false means 'rely on the existing declared balancermember resources' (for the
 # case when you know the full set of balancermembers in advance and use
-#puppetlabs_apache::balancermember with array arguments, which allows you to deploy
+# apache::balancermember with array arguments, which allows you to deploy
 # everything in 1 run)
 #
 #
@@ -36,64 +40,50 @@
 #
 # Exporting the resource for a balancer member:
 #
-#puppetlabs_apache::balancer { 'puppet00': }
+# apache::balancer { 'puppet00': }
 #
-define puppetlabs_apache::balancer (
+define apache::balancer (
   $proxy_set = {},
   $collect_exported = true,
+  $target = undef,
 ) {
-  include concat::setup
-  include ::puppetlabs_apache::mod::proxy_balancer
+  include ::apache::mod::proxy_balancer
 
-  $target = "${::puppetlabs_apache::params::confd_dir}/balancer_${name}.conf"
-
-#  concat { $target:
-#    owner  => '0',
-#    group  => '0',
-#    mode   => '0644',
-#    notify => Service['httpd'],
-#  }
-#
-#  concat::fragment { "00-${name}-header":
-#    ensure  => present,
-#    target  => $target,
-#    order   => '01',
-#    content => "<Proxy balancer://${name}>\n",
-#  }
-
-  concat_build { "plabs_apache_balancer":
-    target => $target
+  if $target {
+    $_target = $target
+  } else {
+    $_target = "${::apache::params::confd_dir}/balancer_${name}.conf"
   }
 
-  concat_fragment { "plabs_apache_balancer+proxy_header":
-    content => "<Proxy balancer://${name}>\n"
+  concat { "apache_balancer_${name}":
+    owner  => '0',
+    group  => '0',
+    path   => $_target,
+    mode   => $::apache::file_mode,
+    notify => Class['Apache::Service'],
+  }
+
+  concat::fragment { "00-${name}-header":
+    target  => "apache_balancer_${name}",
+    order   => '01',
+    content => "<Proxy balancer://${name}>\n",
   }
 
   if $collect_exported {
-    Puppetlabs_apache::Balancermember <<| balancer_cluster == $name |>>
+    Apache::Balancermember <<| balancer_cluster == $name |>>
   }
   # else: the resources have been created and they introduced their
   # concat fragments. We don't have to do anything about them.
 
-#  concat::fragment { "01-${name}-proxyset":
-#    ensure  => present,
-#    target  => $target,
-#    order   => '19',
-#    content => inline_template("<% proxy_set.keys.sort.each do |key| %> Proxyset <%= key %>=<%= proxy_set[key] %>\n<% end %>"),
-#  }
-
-  concat_fragment { "plabs_apache_balancer+proxy_set":
-    content => inline_template("<% proxy_set.keys.sort.each do |key| %> Proxyset <%= key %>=<%= proxy_set[key] %>\n<% end %>")
+  concat::fragment { "01-${name}-proxyset":
+    target  => "apache_balancer_${name}",
+    order   => '19',
+    content => inline_template("<% @proxy_set.keys.sort.each do |key| %> Proxyset <%= key %>=<%= @proxy_set[key] %>\n<% end %>"),
   }
 
-#  concat::fragment { "01-${name}-footer":
-#    ensure  => present,
-#    target  => $target,
-#    order   => '20',
-#    content => "</Proxy>\n",
-#  }
-
-  concat_fragment { "plabs_apache_balancer+proxy_footer":
-    content => "</Proxy>\n"
+  concat::fragment { "01-${name}-footer":
+    target  => "apache_balancer_${name}",
+    order   => '20',
+    content => "</Proxy>\n",
   }
 }

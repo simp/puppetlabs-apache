@@ -1,28 +1,30 @@
-class puppetlabs_apache::mod::prefork (
+class apache::mod::prefork (
   $startservers        = '8',
   $minspareservers     = '5',
   $maxspareservers     = '20',
   $serverlimit         = '256',
   $maxclients          = '256',
   $maxrequestsperchild = '4000',
-  $apache_version      = $::puppetlabs_apache::apache_version,
+  $apache_version      = $::apache::apache_version,
 ) {
-  if defined(Class['puppetlabs_apache::mod::event']) {
-    fail('May not include bothpuppetlabs_apache::mod::prefork andpuppetlabs_apache::mod::event on the same node')
+  if defined(Class['apache::mod::event']) {
+    fail('May not include both apache::mod::prefork and apache::mod::event on the same node')
   }
-  if defined(Class['puppetlabs_apache::mod::itk']) {
-    fail('May not include bothpuppetlabs_apache::mod::prefork andpuppetlabs_apache::mod::itk on the same node')
+  if versioncmp($apache_version, '2.4') < 0 {
+    if defined(Class['apache::mod::itk']) {
+      fail('May not include both apache::mod::prefork and apache::mod::itk on the same node')
+    }
   }
-  if defined(Class['puppetlabs_apache::mod::peruser']) {
-    fail('May not include bothpuppetlabs_apache::mod::prefork andpuppetlabs_apache::mod::peruser on the same node')
+  if defined(Class['apache::mod::peruser']) {
+    fail('May not include both apache::mod::prefork and apache::mod::peruser on the same node')
   }
-  if defined(Class['puppetlabs_apache::mod::worker']) {
-    fail('May not include bothpuppetlabs_apache::mod::prefork andpuppetlabs_apache::mod::worker on the same node')
+  if defined(Class['apache::mod::worker']) {
+    fail('May not include both apache::mod::prefork and apache::mod::worker on the same node')
   }
   File {
     owner => 'root',
-    group => $::puppetlabs_apache::params::root_group,
-    mode  => '0644',
+    group => $::apache::params::root_group,
+    mode  => $::apache::file_mode,
   }
 
   # Template uses:
@@ -32,18 +34,18 @@ class puppetlabs_apache::mod::prefork (
   # - $serverlimit
   # - $maxclients
   # - $maxrequestsperchild
-  file { "${::puppetlabs_apache::mod_dir}/prefork.conf":
+  file { "${::apache::mod_dir}/prefork.conf":
     ensure  => file,
-    content => template('puppetlabs_apache/mod/prefork.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    content => template('apache/mod/prefork.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 
   case $::osfamily {
     'redhat': {
       if versioncmp($apache_version, '2.4') >= 0 {
-        ::puppetlabs_apache::mpm{ 'prefork':
+        ::apache::mpm{ 'prefork':
           apache_version => $apache_version,
         }
       }
@@ -54,13 +56,18 @@ class puppetlabs_apache::mod::prefork (
           line    => '#HTTPD=/usr/sbin/httpd.worker',
           match   => '#?HTTPD=/usr/sbin/httpd.worker',
           require => Package['httpd'],
-          notify  => Service['httpd'],
+          notify  => Class['apache::service'],
         }
       }
     }
-    'debian', 'freebsd' : {
-      ::puppetlabs_apache::mpm{ 'prefork':
+    'debian', 'freebsd', 'Suse' : {
+      ::apache::mpm{ 'prefork':
         apache_version => $apache_version,
+      }
+    }
+    'gentoo': {
+      ::portage::makeconf { 'apache2_mpms':
+        content => 'prefork',
       }
     }
     default: {

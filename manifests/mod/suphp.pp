@@ -1,14 +1,16 @@
-class puppetlabs_apache::mod::suphp (
+class apache::mod::suphp (
 ){
-  ::puppetlabs_apache::mod { 'suphp': }
+  include ::apache
+  ::apache::mod { 'suphp': }
 
   file {'suphp.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/suphp.conf",
-    content => template('puppetlabs_apache/mod/suphp.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd']
+    path    => "${::apache::mod_dir}/suphp.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/suphp.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }
 

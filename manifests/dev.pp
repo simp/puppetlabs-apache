@@ -1,11 +1,14 @@
-class puppetlabs_apache::dev {
-  if $::osfamily == 'FreeBSD' and !defined(Class['puppetlabs_apache::package']) {
-    fail('apache::dev requirespuppetlabs_apache::package; please include apache orpuppetlabs_apache::package class first')
+class apache::dev {
+
+  if ! defined(Class['apache']) {
+    fail('You must include the apache base class before using any apache defined resources')
   }
-  include ::puppetlabs_apache::params
-  $packages = $::puppetlabs_apache::params::dev_packages
-  package { $packages:
-    ensure  => present,
-    require => Package['httpd'],
+
+  $packages = $::apache::dev_packages
+  if $packages { # FreeBSD doesn't have dev packages to install
+    package { $packages:
+      ensure  => present,
+      require => Package['httpd'],
+    }
   }
 }

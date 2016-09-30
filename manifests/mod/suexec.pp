@@ -1,3 +1,3 @@
-class puppetlabs_apache::mod::suexec {
-  ::puppetlabs_apache::mod { 'suexec': }
+class apache::mod::suexec {
+  ::apache::mod { 'suexec': }
 }

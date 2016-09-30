@@ -1,4 +1,4 @@
-# Class:puppetlabs_apache::mod::status
+# Class: apache::mod::status
 #
 # This class enables and configures Apache mod_status
 # See: http://httpd.apache.org/docs/current/mod/mod_status.html
@@ -9,6 +9,8 @@
 #   /server-status URL.  Defaults to ['127.0.0.1', '::1'].
 # - $extended_status track and display extended status information. Valid
 #   values are 'On' or 'Off'.  Defaults to 'On'.
+# - $status_path is the path assigned to the Location directive which
+#   defines the URL to access the server status. Defaults to '/server-status'.
 #
 # Actions:
 # - Enable and configure Apache mod_status
@@ -23,20 +25,25 @@
 #    $allow_from => ['127.0.0.1', '10.10.10.10/24'],
 #  }
 #
-class puppetlabs_apache::mod::status (
+class apache::mod::status (
   $allow_from      = ['127.0.0.1','::1'],
   $extended_status = 'On',
-){
+  $apache_version  = undef,
+  $status_path     = '/server-status',
+) inherits ::apache::params {
+  include ::apache
+  $_apache_version = pick($apache_version, $apache::apache_version)
   validate_array($allow_from)
   validate_re(downcase($extended_status), '^(on|off)$', "${extended_status} is not supported for extended_status.  Allowed values are 'On' and 'Off'.")
-  ::puppetlabs_apache::mod { 'status': }
-  # Template uses $allow_from, $extended_status
+  ::apache::mod { 'status': }
+  # Template uses $allow_from, $extended_status, $_apache_version, $status_path
   file { 'status.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/status.conf",
-    content => template('puppetlabs_apache/mod/status.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    path    => "${::apache::mod_dir}/status.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/status.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }

@@ -1,3 +1,3 @@
-class puppetlabs_apache::mod::actions {
- puppetlabs_apache::mod { 'actions': }
+class apache::mod::actions {
+  apache::mod { 'actions': }
 }

@@ -1,13 +1,14 @@
-class puppetlabs_apache::mod::nss (
-  $transfer_log = "${::puppetlabs_apache::params::logroot}/access.log",
-  $error_log    = "${::puppetlabs_apache::params::logroot}/error.log",
-  $passwd_file  = undef
+class apache::mod::nss (
+  $transfer_log = "${::apache::params::logroot}/access.log",
+  $error_log    = "${::apache::params::logroot}/error.log",
+  $passwd_file  = undef,
+  $port     = 8443,
 ) {
-  include ::puppetlabs_apache::mod::mime
+  include ::apache::mod::mime
 
- puppetlabs_apache::mod { 'nss': }
+  apache::mod { 'nss': }
 
-  $httpd_dir = $::puppetlabs_apache::httpd_dir
+  $httpd_dir = $::apache::httpd_dir
 
   # Template uses:
   # $transfer_log
@@ -16,10 +17,11 @@ class puppetlabs_apache::mod::nss (
   # passwd_file
   file { 'nss.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/nss.conf",
-    content => template('puppetlabs_apache/mod/nss.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    path    => "${::apache::mod_dir}/nss.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/nss.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }

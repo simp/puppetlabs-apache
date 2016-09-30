@@ -1,3 +1,4 @@
-class puppetlabs_apache::mod::speling {
-  ::puppetlabs_apache::mod { 'speling': }
+class apache::mod::speling {
+  include ::apache
+  ::apache::mod { 'speling': }
 }

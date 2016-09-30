@@ -1,12 +1,13 @@
-class puppetlabs_apache::mod::autoindex {
-  ::puppetlabs_apache::mod { 'autoindex': }
+class apache::mod::autoindex {
+  ::apache::mod { 'autoindex': }
   # Template uses no variables
   file { 'autoindex.conf':
     ensure  => file,
-    path    => "${::puppetlabs_apache::mod_dir}/autoindex.conf",
-    content => template('puppetlabs_apache/mod/autoindex.conf.erb'),
-    require => Exec["mkdir ${::puppetlabs_apache::mod_dir}"],
-    before  => File[$::puppetlabs_apache::mod_dir],
-    notify  => Service['httpd'],
+    path    => "${::apache::mod_dir}/autoindex.conf",
+    mode    => $::apache::file_mode,
+    content => template('apache/mod/autoindex.conf.erb'),
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
+    notify  => Class['apache::service'],
   }
 }

@@ -1,3 +1,3 @@
-class puppetlabs_apache::mod::headers {
-  ::puppetlabs_apache::mod { 'headers': }
+class apache::mod::headers {
+  ::apache::mod { 'headers': }
 }

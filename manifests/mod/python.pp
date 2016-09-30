@@ -1,5 +1,6 @@
-class puppetlabs_apache::mod::python {
-  ::puppetlabs_apache::mod { 'python': }
+class apache::mod::python {
+  include ::apache
+  ::apache::mod { 'python': }
 }
 
 
